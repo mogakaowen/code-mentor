@@ -1,0 +1,15 @@
+.custom-slider .ant-slider-track {
+  height: 8px; /* Adjust the thickness of the track */
+  background-color: #3b82f6; /* Customize track color */
+}
+
+.custom-slider .ant-slider-handle {
+  height: 20px; /* Adjust handle height */
+  width: 20px; /* Adjust handle width */
+  margin-top: 2px; /* This centers the handle relative to the track */
+  border-color: #3b82f6; /* Customize handle color */
+}
+
+.custom-slider .ant-slider-rail {
+  height: 8px; /* Adjust the thickness of the rail */
+}
