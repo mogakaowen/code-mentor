@@ -20,7 +20,7 @@ const App = () => {
       try {
         setIsLoading(true);
         const response = await axios.get(
-          `https://www.googleapis.com/youtube/v3/search`,
+          `https://www.googleapis.com/youtube/3/search`,
           {
             params: {
               part: "snippet",
@@ -80,7 +80,7 @@ const App = () => {
 
         {isError && (
           <div className="flex items-center justify-center mt-20">
-            <div className="flex flex-col">
+            <div className="flex flex-col text-center">
               <p className="text-base">
                 Error fetching videos. Please try again later.
               </p>
