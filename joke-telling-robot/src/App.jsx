@@ -3,7 +3,7 @@ import JokeTeller from "./components/JokeTeller";
 
 function App() {
   return (
-    <div className="bg-indigo-100 min-h-screen">
+    <div className="bg-indigo-100 min-h-screen overflow-auto">
       <Header />
       <JokeTeller />
     </div>

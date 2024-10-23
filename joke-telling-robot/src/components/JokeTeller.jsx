@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { Select, Button } from "antd";
+
+const { Option } = Select;
 
 const JokeTeller = () => {
   const [joke, setJoke] = useState("");
@@ -17,6 +20,17 @@ const JokeTeller = () => {
     []
   );
 
+  const laughsArray = useMemo(
+    () => [
+      "U RO RO RO RO RO RO RO RO RO",
+      "HA HA HA HA HA HA HA HA HA",
+      "DE RE SHI SHI SHI SHI SHI SHI SHI SHI",
+      "SHI LO LO LO LO LO LO LO LO",
+      "ZE HA HA HA HA HA HA HA HA HA",
+    ],
+    []
+  );
+
   useEffect(() => {
     // Fetch available voices for the speech synthesis
     const synth = window.speechSynthesis;
@@ -28,33 +42,51 @@ const JokeTeller = () => {
   }, []);
 
   const fetchAndSpeakJoke = useCallback(async () => {
-    // Fetch the joke from the API
-    const response = await fetch(
-      "https://official-joke-api.appspot.com/jokes/programming/random"
-    );
-    const data = await response.json();
-    const jokeData = data[0];
-    setJoke(jokeData); // Update joke in state
+    try {
+      // Fetch the joke from the API
+      const response = await fetch(
+        "https://official-joke-api.appspot.com/jokes/programming/random"
+      );
 
-    // Randomly select a GIF from the memoized array
-    const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
-    setSelectedGif(randomGif);
+      // Check if the response is okay
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
 
-    // Speak the joke
-    const utterance = new SpeechSynthesisUtterance(
-      `${jokeData.setup} ${jokeData.punchline} HA HA HA`
-    );
-    utterance.lang = language;
+      const data = await response.json();
+      const jokeData = data[0];
+      setJoke(jokeData); // Update joke in state
 
-    // Show the robot GIF while speaking
-    setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false); // Hide GIF when done speaking
+      // Randomly select a GIF from the memoized array
+      const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
+      setSelectedGif(randomGif);
 
-    window.speechSynthesis.speak(utterance);
-  }, [language, gifs]);
+      // Randomly select a laugh from the laughsArray
+      const randomLaugh =
+        laughsArray[Math.floor(Math.random() * laughsArray.length)];
 
-  const handleChangeLanguage = (e) => {
-    setLanguage(e.target.value);
+      // Speak the joke with a randomly selected laugh
+      const utterance = new SpeechSynthesisUtterance(
+        `${jokeData.setup} ${jokeData.punchline} ${randomLaugh}`
+      );
+      utterance.lang = language;
+
+      // Show the robot GIF while speaking
+      setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false); // Hide GIF when done speaking
+
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error("Failed to fetch the joke:", error);
+      setJoke({
+        setup: "Oops!",
+        punchline: "Something went wrong. Please try again later.",
+      });
+    }
+  }, [language, gifs, laughsArray]);
+
+  const handleChangeLanguage = (value) => {
+    setLanguage(value);
   };
 
   useEffect(() => {
@@ -99,30 +131,32 @@ const JokeTeller = () => {
         <img
           src={selectedGif}
           alt="Robot Speaking"
-          className="w-40 h-40 mb-4"
+          className="w-40 h-40 mb-4 rounded-xl"
         />
       )}
 
-      <button
+      <Button
         onClick={fetchAndSpeakJoke}
-        className="bg-blue-500 text-white py-2 px-4 rounded mb-4"
+        type="primary"
+        className="text-white px-5 shadow-none h-full rounded mb-4"
       >
         Tell Me A Joke
-      </button>
+      </Button>
 
-      <select
+      <Select
         value={language}
         onChange={handleChangeLanguage}
-        className="border p-2 rounded"
+        style={{ width: "100%", maxWidth: "300px" }} // Ensure it fits within the layout
+        dropdownStyle={{ maxWidth: "300px" }}
       >
         {voices.map((voice, index) => (
-          <option key={index} value={voice.lang}>
+          <Option key={index} value={voice.lang}>
             {voice.name} ({voice.lang})
-          </option>
+          </Option>
         ))}
-      </select>
+      </Select>
 
-      <p className="mt-4 text-lg">
+      <p className="mt-4 text-center">
         {joke && `${joke.setup} - ${joke.punchline}`}
       </p>
     </div>
