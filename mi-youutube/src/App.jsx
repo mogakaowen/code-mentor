@@ -1,10 +1,14 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useContext } from "react";
+import { ConfigProvider, theme } from "antd";
 import axios from "axios";
 import SearchBar from "./components/SearchBar";
 import VideoList from "./components/VideoList";
 import VideoPlayer from "./components/VideoPlayer";
+import { ThemeContext } from "../store/theme-context";
 
 const App = () => {
+  const { theme: currentTheme } = useContext(ThemeContext);
+
   const [videos, setVideos] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY; // keys are exposed in Vite's import.meta.env and must start with VITE_
@@ -39,20 +43,32 @@ const App = () => {
   }, [searchVideos]);
 
   return (
-    <div className="p-2">
-      <div className="w-full">
-        <SearchBar onSearch={searchVideos} />
-      </div>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#C53030",
+        },
+        algorithm:
+          currentTheme === "light"
+            ? theme.defaultAlgorithm
+            : theme.darkAlgorithm,
+      }}
+    >
+      <div className="p-2">
+        <div className="w-full">
+          <SearchBar onSearch={searchVideos} />
+        </div>
 
-      <div className="flex">
-        <div className="w-2/3 p-4">
-          <VideoPlayer video={selectedVideo} />
-        </div>
-        <div className="w-1/3 p-4">
-          <VideoList videos={videos} onSelectVideo={setSelectedVideo} />
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="md:w-2/3 p-4">
+            <VideoPlayer video={selectedVideo} />
+          </div>
+          <div className="md:w-1/3 p-4">
+            <VideoList videos={videos} onSelectVideo={setSelectedVideo} />
+          </div>
         </div>
       </div>
-    </div>
+    </ConfigProvider>
   );
 };
 
