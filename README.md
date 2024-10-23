@@ -29,6 +29,12 @@ Each project focuses on different aspects of programming, from front-end develop
 - **Technologies Used**: React, Tailwind Css, JavaScript
 - **Live Demo**: [ Joke Telling Bot Live Demo](https://mortgage-calculator-v123.netlify.app/)
 
+### 3. Personal YouTube Web Player
+
+- **Description**: The app fetches video results from the YouTube Data API and displays them in a user-friendly list. Users can select a video to watch directly within the app using an embedded video player. It features a responsive design for smooth functionality across different screen sizes. The app is ideal for users who want a quick way to discover and watch YouTube content without leaving the application.
+- **Technologies Used**: React, Tailwind Css, JavaScript, Ant Design
+- **Live Demo**: [ Joke Telling Bot Live Demo](https://mogaka-tube.netlify.app/)
+
 ## Technologies Used
 
 Here are some of the key technologies and tools I have utilized in my projects:

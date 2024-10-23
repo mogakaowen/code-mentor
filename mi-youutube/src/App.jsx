@@ -20,7 +20,7 @@ const App = () => {
       try {
         setIsLoading(true);
         const response = await axios.get(
-          `https://www.googleapis.com/youtube/3/search`,
+          `https://www.googleapis.com/youtube/v3/search`,
           {
             params: {
               part: "snippet",
