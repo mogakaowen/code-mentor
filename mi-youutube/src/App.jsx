@@ -39,13 +39,18 @@ const App = () => {
   }, [searchVideos]);
 
   return (
-    <div className="flex">
-      <div className="w-2/3 p-4">
+    <div className="p-2">
+      <div className="w-full">
         <SearchBar onSearch={searchVideos} />
-        <VideoPlayer video={selectedVideo} />
       </div>
-      <div className="w-1/3 p-4">
-        <VideoList videos={videos} onSelectVideo={setSelectedVideo} />
+
+      <div className="flex">
+        <div className="w-2/3 p-4">
+          <VideoPlayer video={selectedVideo} />
+        </div>
+        <div className="w-1/3 p-4">
+          <VideoList videos={videos} onSelectVideo={setSelectedVideo} />
+        </div>
       </div>
     </div>
   );

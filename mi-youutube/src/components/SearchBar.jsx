@@ -1,29 +1,43 @@
+import { Form, Input } from "antd";
 import { useState } from "react";
+import { SearchOutlined, YoutubeOutlined } from "@ant-design/icons"; // Import the search and YouTube icons
+
+const { Search } = Input; // Destructure Search from Input
 
 const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState("");
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      onSearch(query);
+  const handleSearch = (value) => {
+    console.log("searching...");
+    if (value.trim()) {
+      onSearch(value);
       setQuery("");
     }
   };
 
   return (
-    <form onSubmit={handleSearch} className="flex items-center p-4">
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search for videos..."
-        className="flex-grow p-2 border rounded"
-      />
-      <button type="submit" className="ml-2 p-2 bg-blue-500 text-white rounded">
-        Search
-      </button>
-    </form>
+    <div className="flex items-center justify-start w-full px-4">
+      <div className="flex items-center text-red-600 ">
+        <YoutubeOutlined className="text-3xl mr-2" /> {/* YouTube icon */}
+        <p className="font-bold">MiTube</p>
+        {/* Label for Mi-Tube */}
+      </div>
+      <Form
+        className="flex items-center md:w-2/3 ml-10"
+        onFinish={() => handleSearch(query)}
+      >
+        <Form.Item name="query" className="w-full" style={{ marginBottom: 0 }}>
+          <Search
+            size="large"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for videos..."
+            enterButton={<SearchOutlined />} // Use Search icon as the button
+            onSearch={handleSearch} // Call handleSearch on search
+          />
+        </Form.Item>
+      </Form>
+    </div>
   );
 };
 

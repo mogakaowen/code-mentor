@@ -3,9 +3,9 @@ import React from "react";
 const VideoList = ({ videos, onSelectVideo }) => {
   return (
     <div className="flex flex-col space-y-4">
-      {videos.map((video) => (
+      {videos.map((video, index) => (
         <div
-          key={video.id.videoId}
+          key={video.id.videoId || index}
           className="flex cursor-pointer"
           onClick={() => onSelectVideo(video)}
         >
