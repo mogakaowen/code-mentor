@@ -1,9 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 const JokeTeller = () => {
   const [joke, setJoke] = useState("");
   const [language, setLanguage] = useState("en-US");
   const [voices, setVoices] = useState([]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [selectedGif, setSelectedGif] = useState("");
+  // Memoize the array of GIF URLs to prevent re-creation on every render
+  const gifs = useMemo(
+    () => [
+      "/roboDance.gif",
+      "/roboDance2.gif",
+      "/roboDance3.gif",
+      "/roboDance4.gif",
+    ],
+    []
+  );
 
   useEffect(() => {
     // Fetch available voices for the speech synthesis
@@ -16,19 +28,30 @@ const JokeTeller = () => {
   }, []);
 
   const fetchAndSpeakJoke = useCallback(async () => {
+    // Fetch the joke from the API
     const response = await fetch(
       "https://official-joke-api.appspot.com/jokes/programming/random"
     );
     const data = await response.json();
     const jokeData = data[0];
-    setJoke(jokeData);
+    setJoke(jokeData); // Update joke in state
 
+    // Randomly select a GIF from the memoized array
+    const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
+    setSelectedGif(randomGif);
+
+    // Speak the joke
     const utterance = new SpeechSynthesisUtterance(
       `${jokeData.setup} ${jokeData.punchline} HA HA HA`
     );
     utterance.lang = language;
+
+    // Show the robot GIF while speaking
+    setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false); // Hide GIF when done speaking
+
     window.speechSynthesis.speak(utterance);
-  }, [language]);
+  }, [language, gifs]);
 
   const handleChangeLanguage = (e) => {
     setLanguage(e.target.value);
@@ -70,14 +93,23 @@ const JokeTeller = () => {
   }, [fetchAndSpeakJoke, language]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Joke Telling Robot</h1>
+    <div className="flex flex-col items-center justify-center p-2">
+      {/* Randomly display robot GIF */}
+      {isSpeaking && selectedGif && (
+        <img
+          src={selectedGif}
+          alt="Robot Speaking"
+          className="w-40 h-40 mb-4"
+        />
+      )}
+
       <button
         onClick={fetchAndSpeakJoke}
         className="bg-blue-500 text-white py-2 px-4 rounded mb-4"
       >
         Tell Me A Joke
       </button>
+
       <select
         value={language}
         onChange={handleChangeLanguage}
@@ -89,7 +121,8 @@ const JokeTeller = () => {
           </option>
         ))}
       </select>
-      <p className="mt-4 text-center">
+
+      <p className="mt-4 text-lg">
         {joke && `${joke.setup} - ${joke.punchline}`}
       </p>
     </div>
