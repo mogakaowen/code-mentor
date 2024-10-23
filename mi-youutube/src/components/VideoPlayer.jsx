@@ -16,9 +16,9 @@ const VideoPlayer = ({ video }) => {
         allowFullScreen
       ></iframe>
 
-      <div className="bg-gray-100 rounded-lg p-2">
+      <div className="rounded-lg p-2">
         <p className="text-xl font-bold mt-2">{video.snippet.title}</p>
-        <p className="text-gray-600">{video.snippet.description}</p>
+        <p>{video.snippet.description}</p>
       </div>
     </div>
   );

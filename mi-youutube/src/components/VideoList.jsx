@@ -19,11 +19,11 @@ const VideoList = ({ videos, onSelectVideo }) => {
               />
             </div>
             <div className="w-full p-2">
-              <p className="text-base font-semibold text-gray-800 line-clamp-2">
+              <p className="text-base font-semibold line-clamp-2">
                 {video.snippet.title}
               </p>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs">
                 {new Date(video.snippet.publishedAt).toLocaleDateString()}{" "}
               </p>
             </div>
