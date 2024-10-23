@@ -1,18 +1,11 @@
 import { HelmetProvider } from "react-helmet-async";
 import SeoHelmet from "../components/SeoHelmet";
-import { useContext } from "react";
-import { ThemeContext } from "../../store/theme-context";
+
 import Navbar from "./NavBar";
 
 const MainLayout = ({ children }) => {
-  const { theme } = useContext(ThemeContext);
-
   return (
-    <div
-      className={` ${
-        theme === "light" ? "bg-stone-100" : "bg-stone-900"
-      } relative w-full min-h-screen overflow-aut0`}
-    >
+    <div className="relative w-full min-h-screen overflow-auto">
       <HelmetProvider>
         <SeoHelmet
           title="Mortgage Calculator - Your Home Financing Solution"

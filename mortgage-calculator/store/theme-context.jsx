@@ -8,6 +8,14 @@ export const ThemeProvider = ({ children }) => {
   });
 
   useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.style.setProperty("--background-color", "#1C1917");
+      root.style.setProperty("--text-color", "#ffffff");
+    } else {
+      root.style.setProperty("--background-color", "#F5F5F4");
+      root.style.setProperty("--text-color", "#000000");
+    }
     localStorage.setItem("theme", theme);
   }, [theme]);
 
