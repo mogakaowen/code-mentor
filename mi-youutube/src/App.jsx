@@ -80,12 +80,14 @@ const App = () => {
 
         {isError && (
           <div className="flex items-center justify-center mt-20">
-            <p className="text-base">
-              Error fetching videos. Please try again later.
-            </p>
-            <p className="text-sm">
-              The quota for the YouTube API key has probably been exceeded.
-            </p>
+            <div className="flex flex-col">
+              <p className="text-base">
+                Error fetching videos. Please try again later.
+              </p>
+              <p className="text-sm">
+                The quota for the YouTube API key has probably been exceeded.
+              </p>
+            </div>
           </div>
         )}
 
