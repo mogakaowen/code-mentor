@@ -6,15 +6,7 @@ const JokeTeller = () => {
   const [voices, setVoices] = useState([]);
 
   useEffect(() => {
-    const fetchJoke = async () => {
-      const response = await fetch("https://api.jokes.one/jod"); // You can change this API as needed
-      const data = await response.json();
-      setJoke(data.contents.jokes[0].joke.text);
-    };
-
-    fetchJoke();
-
-    // Speech synthesis
+    // Fetch available voices for the speech synthesis
     const synth = window.speechSynthesis;
     const fetchVoices = () => {
       setVoices(synth.getVoices());
@@ -23,11 +15,20 @@ const JokeTeller = () => {
     synth.onvoiceschanged = fetchVoices;
   }, []);
 
-  const speakJoke = useCallback(() => {
-    const utterance = new SpeechSynthesisUtterance(joke);
+  const fetchAndSpeakJoke = useCallback(async () => {
+    const response = await fetch(
+      "https://official-joke-api.appspot.com/jokes/programming/random"
+    );
+    const data = await response.json();
+    const jokeData = data[0];
+    setJoke(jokeData);
+
+    const utterance = new SpeechSynthesisUtterance(
+      `${jokeData.setup} ${jokeData.punchline} HA HA HA`
+    );
     utterance.lang = language;
     window.speechSynthesis.speak(utterance);
-  }, [joke, language]);
+  }, [language]);
 
   const handleChangeLanguage = (e) => {
     setLanguage(e.target.value);
@@ -36,7 +37,7 @@ const JokeTeller = () => {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "j" || event.key === "J") {
-        speakJoke();
+        fetchAndSpeakJoke(); // Fetch and speak joke on 'J' press
       }
     };
 
@@ -49,7 +50,7 @@ const JokeTeller = () => {
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         if (transcript.toLowerCase() === "tell me a joke") {
-          speakJoke();
+          fetchAndSpeakJoke();
         }
       };
 
@@ -66,13 +67,13 @@ const JokeTeller = () => {
       // Clean up the event listener on component unmount
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [speakJoke, language]);
+  }, [fetchAndSpeakJoke, language]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-2xl font-bold mb-4">Joke Telling Robot</h1>
       <button
-        onClick={speakJoke}
+        onClick={fetchAndSpeakJoke}
         className="bg-blue-500 text-white py-2 px-4 rounded mb-4"
       >
         Tell Me A Joke
@@ -88,7 +89,9 @@ const JokeTeller = () => {
           </option>
         ))}
       </select>
-      <p className="mt-4 text-lg">{joke}</p>
+      <p className="mt-4 text-center">
+        {joke && `${joke.setup} - ${joke.punchline}`}
+      </p>
     </div>
   );
 };
