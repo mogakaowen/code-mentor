@@ -10,6 +10,7 @@ const Globe = () => {
   const [land, setLand] = useState(null);
   const [currentRotation, setCurrentRotation] = useState([0, 0, 0]);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [visitedCountries, setVisitedCountries] = useState([]);
 
   // Reduce globe size by lowering the scale value
   const projection = d3
@@ -20,7 +21,7 @@ const Globe = () => {
 
   const path = d3.geoPath(projection);
 
-  // Draw the globe with optional country highlight
+  // Draw the globe with optional country highlight and pins
   const draw = useCallback(
     (context, landData, highlightCountry) => {
       context.clearRect(0, 0, width, height);
@@ -40,7 +41,18 @@ const Globe = () => {
         context.fill();
       }
 
-      // Draw pin if a country is selected
+      // Draw pins for visited countries and show their names
+      visitedCountries.forEach((country) => {
+        const [x, y] = projection([country.longitude, country.latitude]);
+        context.beginPath();
+        context.arc(x, y, 4, 0, 2 * Math.PI); // Pin marker
+        context.fillStyle = "orange"; // Previously visited countries are orange
+        context.fill();
+        context.font = "10px Arial";
+        context.fillText(country.name, x + 6, y - 6);
+      });
+
+      // Draw pin for the currently selected country
       if (selectedCountry) {
         const [x, y] = projection([
           selectedCountry.longitude,
@@ -48,11 +60,13 @@ const Globe = () => {
         ]);
         context.beginPath();
         context.arc(x, y, 4, 0, 2 * Math.PI); // Pin marker
-        context.fillStyle = "red";
+        context.fillStyle = "red"; // Current country is red
         context.fill();
+        context.font = "10px Arial";
+        context.fillText(selectedCountry.name, x + 6, y - 6);
       }
     },
-    [path, width, height, selectedCountry, projection]
+    [path, width, height, selectedCountry, visitedCountries, projection]
   );
 
   useEffect(() => {
@@ -91,6 +105,9 @@ const Globe = () => {
     const selectedCountryName = e.target.value;
     const country = countries.find((c) => c.name === selectedCountryName);
     if (country) {
+      if (!visitedCountries.find((c) => c.name === country.name)) {
+        setVisitedCountries([...visitedCountries, country]); // Add to visited list
+      }
       setSelectedCountry(country);
       rotateToCountry(
         parseFloat(country.latitude),
@@ -119,6 +136,9 @@ const Globe = () => {
       return currDist < prevDist ? curr : prev;
     });
 
+    if (!visitedCountries.find((c) => c.name === nearestCountry.name)) {
+      setVisitedCountries([...visitedCountries, nearestCountry]);
+    }
     setSelectedCountry(nearestCountry);
     rotateToCountry(nearestCountry.latitude, nearestCountry.longitude);
   };
@@ -135,6 +155,7 @@ const Globe = () => {
       <div className="mt-5">
         <select
           onChange={handleCountryChange}
+          value={selectedCountry ? selectedCountry.name : ""}
           className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option>Select a country</option>
