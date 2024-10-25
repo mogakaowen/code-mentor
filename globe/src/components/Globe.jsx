@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
 import * as topojson from "topojson-client";
-import { countries } from "../utils/countries";
 
-const Globe = () => {
+const Globe = ({ countries }) => {
   console.log("Globe rendered");
   const width = 600;
   const height = 500;

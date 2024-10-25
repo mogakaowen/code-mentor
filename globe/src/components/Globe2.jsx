@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { countries as Countries, regions } from "country-data-list";
 import * as d3 from "d3";
 import * as topojson from "topojson-client";
-import { countries as countryList } from "../utils/countries";
-import { continents } from "../utils/continents";
 
-const Globe = () => {
+const Globe = ({ countries }) => {
   console.log("Globe rendered");
   const width = 600;
   const height = 500;
@@ -14,33 +11,11 @@ const Globe = () => {
   const [borders, setBorders] = useState(null); // State for country borders
   const [currentRotation, setCurrentRotation] = useState([0, 0, 0]);
   const [selectedCountry, setSelectedCountry] = useState(null);
-  const [visitedCountries, setVisitedCountries] = useState([]);
-
-  const countries = countryList.map((country) => {
-    const countryInfo = Countries.all.find((c) => c.name === country.name);
-
-    const regionEntry = countryInfo
-      ? Object.values(regions).find((region) =>
-          region.countries.includes(countryInfo.alpha2)
-        )
-      : null;
-
-    const continentEntry = countryInfo
-      ? continents.find((continent) =>
-          continent.countries.includes(countryInfo.alpha2)
-        )
-      : null;
-
-    return {
-      ...country,
-      region: regionEntry ? regionEntry.name : "Other",
-      continent: continentEntry ? continentEntry.name : "Unknown",
-    };
-  });
+  const [continentCountries, setContinentCountries] = useState([]); // New state for countries in the same continent
 
   const projection = d3
     .geoOrthographic()
-    .scale(200)
+    .scale(220)
     .translate([width / 2, height / 2])
     .rotate(currentRotation);
 
@@ -68,24 +43,25 @@ const Globe = () => {
       context.lineWidth = 0.5;
       context.stroke();
 
-      // Highlight the selected country
+      // Highlight the selected country and its continent countries
       if (selectedCountry) {
+        // Highlight selected country
         context.beginPath();
         path.context(context)(selectedCountry);
-        context.fillStyle = "rgba(255, 0, 0, 0.3)";
+        context.fillStyle = "rgba(255, 0, 0, 0.5)"; // More visible color
         context.fill();
-      }
 
-      // Draw pins for visited countries and show their names
-      visitedCountries.forEach((country) => {
-        const [x, y] = projection([country.longitude, country.latitude]);
-        context.beginPath();
-        context.arc(x, y, 4, 0, 2 * Math.PI);
-        context.fillStyle = "orange";
-        context.fill();
-        context.font = "10px Arial";
-        context.fillText(country.name, x + 6, y - 6);
-      });
+        // Highlight all countries in the same continent
+        continentCountries.forEach((country) => {
+          const [x, y] = projection([country.longitude, country.latitude]);
+          context.beginPath();
+          context.arc(x, y, 4, 0, 2 * Math.PI);
+          context.fillStyle = "orange";
+          context.fill();
+          context.font = "10px Arial";
+          context.fillText(country.name, x + 6, y - 6);
+        });
+      }
 
       // Draw pin for the currently selected country
       if (selectedCountry) {
@@ -101,7 +77,7 @@ const Globe = () => {
         context.fillText(selectedCountry.name, x + 6, y - 6);
       }
     },
-    [path, land, borders, selectedCountry, visitedCountries, projection]
+    [path, land, borders, selectedCountry, continentCountries, projection]
   );
 
   useEffect(() => {
@@ -146,11 +122,13 @@ const Globe = () => {
   const handleCountryChange = (e) => {
     const selectedCountryName = e.target.value;
     const country = countries.find((c) => c.name === selectedCountryName);
+
     if (country) {
-      if (!visitedCountries.find((c) => c.name === country.name)) {
-        setVisitedCountries((prev) => [...prev, country]);
-      }
       setSelectedCountry(country);
+      setContinentCountries(
+        countries.filter((c) => c.continent === country.continent)
+      ); // Set continent countries
+
       rotateToCountry(
         parseFloat(country.latitude),
         parseFloat(country.longitude)
@@ -176,15 +154,16 @@ const Globe = () => {
       return currDist < prevDist ? curr : prev;
     });
 
-    if (!visitedCountries.find((c) => c.name === nearestCountry.name)) {
-      setVisitedCountries((prev) => [...prev, nearestCountry]);
-    }
     setSelectedCountry(nearestCountry);
+    setContinentCountries(
+      countries.filter((c) => c.continent === nearestCountry.continent)
+    ); // Set continent countries
     rotateToCountry(nearestCountry.latitude, nearestCountry.longitude);
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center  min-h-screen">
+      <p className="font-semibold">{selectedCountry?.continent}</p>
       <canvas
         ref={canvasRef}
         width={width}
@@ -192,6 +171,7 @@ const Globe = () => {
         onClick={handleGlobeClick}
         className="border border-gray-300 shadow-lg rounded-lg cursor-pointer"
       ></canvas>
+
       <div className="mt-5">
         <select
           onChange={handleCountryChange}
