@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { countries as Countries, regions } from "country-data-list";
 import * as d3 from "d3";
 import * as topojson from "topojson-client";
-import { countries } from "../utils/countries";
+import { countries as countryList } from "../utils/countries";
+import { continents } from "../utils/continents";
 
 const Globe = () => {
+  console.log("Globe rendered");
   const width = 600;
   const height = 500;
   const canvasRef = useRef();
@@ -11,9 +14,29 @@ const Globe = () => {
   const [borders, setBorders] = useState(null); // State for country borders
   const [currentRotation, setCurrentRotation] = useState([0, 0, 0]);
   const [selectedCountry, setSelectedCountry] = useState(null);
-  const [continentCountries, setContinentCountries] = useState([]); // State for countries in the same continent
+  const [visitedCountries, setVisitedCountries] = useState([]);
 
-  console.log(countries);
+  const countries = countryList.map((country) => {
+    const countryInfo = Countries.all.find((c) => c.name === country.name);
+
+    const regionEntry = countryInfo
+      ? Object.values(regions).find((region) =>
+          region.countries.includes(countryInfo.alpha2)
+        )
+      : null;
+
+    const continentEntry = countryInfo
+      ? continents.find((continent) =>
+          continent.countries.includes(countryInfo.alpha2)
+        )
+      : null;
+
+    return {
+      ...country,
+      region: regionEntry ? regionEntry.name : "Other",
+      continent: continentEntry ? continentEntry.name : "Unknown",
+    };
+  });
 
   const projection = d3
     .geoOrthographic()
@@ -24,12 +47,14 @@ const Globe = () => {
   const path = d3.geoPath(projection);
 
   const draw = useCallback(
-    (context, landData, bordersData, highlightCountries) => {
+    (context) => {
+      if (!land || !borders) return;
+
       context.clearRect(0, 0, width, height);
 
       // Draw the land
       context.beginPath();
-      path.context(context)(landData);
+      path.context(context)(land);
       context.fillStyle = "#ccc";
       context.fill();
       context.strokeStyle = "#333";
@@ -38,20 +63,31 @@ const Globe = () => {
 
       // Draw country borders
       context.beginPath();
-      path.context(context)(bordersData);
+      path.context(context)(borders);
       context.strokeStyle = "#888"; // Color for borders
       context.lineWidth = 0.5;
       context.stroke();
 
-      // Highlight the selected country and countries in the same continent
-      highlightCountries.forEach((country) => {
+      // Highlight the selected country
+      if (selectedCountry) {
         context.beginPath();
-        path.context(context)(country);
-        context.fillStyle = "rgba(255, 0, 0, 0.3)"; // Highlight color
+        path.context(context)(selectedCountry);
+        context.fillStyle = "rgba(255, 0, 0, 0.3)";
         context.fill();
+      }
+
+      // Draw pins for visited countries and show their names
+      visitedCountries.forEach((country) => {
+        const [x, y] = projection([country.longitude, country.latitude]);
+        context.beginPath();
+        context.arc(x, y, 4, 0, 2 * Math.PI);
+        context.fillStyle = "orange";
+        context.fill();
+        context.font = "10px Arial";
+        context.fillText(country.name, x + 6, y - 6);
       });
 
-      // Draw pins for the currently selected country
+      // Draw pin for the currently selected country
       if (selectedCountry) {
         const [x, y] = projection([
           selectedCountry.longitude,
@@ -65,12 +101,10 @@ const Globe = () => {
         context.fillText(selectedCountry.name, x + 6, y - 6);
       }
     },
-    [path, width, height, selectedCountry, projection]
+    [path, land, borders, selectedCountry, visitedCountries, projection]
   );
 
   useEffect(() => {
-    const context = canvasRef.current.getContext("2d");
-
     // Fetch and render the world map data
     d3.json("https://d3js.org/world-110m.v1.json").then((worldData) => {
       const landData = topojson.feature(worldData, worldData.objects.land);
@@ -79,13 +113,18 @@ const Globe = () => {
         worldData.objects.countries,
         (a, b) => a !== b
       ); // Get borders
-      setLand(landData);
-      setBorders(bordersData); // Set borders state
-      draw(context, landData, bordersData, continentCountries);
-    });
-  }, [draw, continentCountries]);
 
-  // Rotate the globe to the selected country
+      setLand(landData);
+      setBorders(bordersData);
+    });
+  }, []);
+
+  // Use a separate effect to handle drawing after the land and borders have been set
+  useEffect(() => {
+    const context = canvasRef.current.getContext("2d");
+    draw(context);
+  }, [draw]);
+
   const rotateToCountry = (latitude, longitude) => {
     const context = canvasRef.current.getContext("2d");
     const startRotation = currentRotation;
@@ -96,7 +135,7 @@ const Globe = () => {
       .tween("rotate", () => {
         return (t) => {
           projection.rotate(rotate(t));
-          draw(context, land, borders, continentCountries);
+          draw(context); // Call draw here with only the context
         };
       })
       .on("end", () => {
@@ -108,14 +147,10 @@ const Globe = () => {
     const selectedCountryName = e.target.value;
     const country = countries.find((c) => c.name === selectedCountryName);
     if (country) {
+      if (!visitedCountries.find((c) => c.name === country.name)) {
+        setVisitedCountries((prev) => [...prev, country]);
+      }
       setSelectedCountry(country);
-
-      // Filter countries in the same continent
-      const countriesInSameContinent = countries.filter(
-        (c) => c.continent === country.continent
-      );
-      setContinentCountries(countriesInSameContinent); // Set the countries in the same continent
-
       rotateToCountry(
         parseFloat(country.latitude),
         parseFloat(country.longitude)
@@ -141,14 +176,10 @@ const Globe = () => {
       return currDist < prevDist ? curr : prev;
     });
 
+    if (!visitedCountries.find((c) => c.name === nearestCountry.name)) {
+      setVisitedCountries((prev) => [...prev, nearestCountry]);
+    }
     setSelectedCountry(nearestCountry);
-
-    // Filter countries in the same continent
-    const countriesInSameContinent = countries.filter(
-      (c) => c.continent === nearestCountry.continent
-    );
-    setContinentCountries(countriesInSameContinent); // Set the countries in the same continent
-
     rotateToCountry(nearestCountry.latitude, nearestCountry.longitude);
   };
 

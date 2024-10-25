@@ -1,12 +1,11 @@
-import Globe from "./components/Globe";
+// import Globe from "./components/Globe";
 import Globe2 from "./components/Globe2";
 
 function App() {
   console.log("App rendered");
   return (
     <div>
-      <Globe />
-      {/* <Globe2 /> */}
+      <Globe2 />
     </div>
   );
 }
