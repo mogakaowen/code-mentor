@@ -27,7 +27,7 @@ Each project focuses on different aspects of programming, from front-end develop
 
 - **Description**: The Joke Telling Bot is an interactive web application designed to entertain users by delivering random programming jokes with a humorous twist. Users can trigger the bot to fetch a joke at the click of a button or by using voice commands. Each joke is delivered using speech synthesis for a fun auditory experience, accompanied by playful GIFs. The bot includes language options for a personalized touch, making it an enjoyable tool for developers, tech enthusiasts, and anyone looking for a quick laugh.
 - **Technologies Used**: React, Tailwind Css, JavaScript
-- **Live Demo**: [ Joke Telling Bot Live Demo](https://mortgage-calculator-v123.netlify.app/)
+- **Live Demo**: [ Joke Telling Bot Live Demo](https://robojoke.netlify.app/)
 
 ### 3. Personal YouTube Web Player
 
@@ -35,6 +35,12 @@ Each project focuses on different aspects of programming, from front-end develop
 - **Hint**: Clicking the app icon/name triggers light/dark mode change.
 - **Technologies Used**: React, Tailwind Css, JavaScript, Ant Design
 - **Live Demo**: [ Joke Telling Bot Live Demo](https://mogaka-tube.netlify.app/)
+
+### 4. Globe Project
+
+- **Description**: The Globe Project is an interactive web application that allows users to explore a 3D globe, showcasing countries and their respective locations. Users can rotate and zoom in on the globe to view different regions, and click on countries to retrieve information such as country name, continent, and geographical coordinates. This project aims to provide an engaging way to visualize global geography and is an excellent tool for educational purposes or simply exploring the world.
+- **Technologies Used**: React, Three.js, Tailwind CSS, JavaScript
+- **Live Demo**: Not deployed
 
 ## Technologies Used
 
