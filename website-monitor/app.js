@@ -1,20 +1,26 @@
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
+const cors = require("cors");
 
 const monitorRoutes = require("./routes/monitor");
 const reportRoutes = require("./routes/reports");
+const userRoutes = require("./routes/users");
 const monitorWebsites = require("./middleware/monitor");
 
-dotenv.config();
 const app = express();
+
+app.use(cors());
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
+app.use("/users", userRoutes);
 app.use("/monitor", monitorRoutes);
 app.use("/", reportRoutes);
 
 // Start monitoring on server start
-monitorWebsites();
+// monitorWebsites();
 
 const PORT = process.env.PORT || 8000;
 
