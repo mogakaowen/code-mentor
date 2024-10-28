@@ -1,4 +1,5 @@
 const axios = require("axios");
+const cron = require("cron");
 const nodemailer = require("nodemailer");
 const Website = require("../models/website");
 const StatusLog = require("../models/status-log");
@@ -58,13 +59,30 @@ function sendAlert(website, message) {
   });
 }
 
-function scheduleMonitoringJob(website) {
-  const intervalInMs = website.interval; // Assuming the interval is in milliseconds
-  const job = setInterval(() => {
-    checkWebsite(website);
-  }, intervalInMs);
+function convertToCronFormat(interval) {
+  if (interval < 1) {
+    throw new Error("Interval must be at least 1 minute.");
+  }
+  return `*/${interval} * * * *`; // Cron expression for every 'n' minutes
+}
 
-  monitoredWebsites.set(website._id.toString(), job);
+function scheduleMonitoringJob(website) {
+  try {
+    const cronExpression = convertToCronFormat(website.interval);
+    const job = new cron.CronJob(cronExpression, () => {
+      checkWebsite(website);
+    });
+    job.start();
+    monitoredWebsites.set(website._id.toString(), job);
+    console.log(
+      `Scheduled monitoring job for ${website.url} with interval ${website.interval} minutes`
+    );
+  } catch (error) {
+    console.error(
+      `Error scheduling monitoring job for ${website.url}:`,
+      error.message
+    );
+  }
 }
 
 function monitorWebsites() {
@@ -82,7 +100,7 @@ function monitorWebsites() {
     // Clean up jobs for removed websites
     monitoredWebsites.forEach((job, websiteId) => {
       if (!websites.some((website) => website._id.toString() === websiteId)) {
-        clearInterval(job); // Stop the interval job
+        job.stop();
         monitoredWebsites.delete(websiteId);
         console.log(`Stopped monitoring for removed website ID: ${websiteId}`);
       }
