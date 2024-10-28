@@ -8,6 +8,7 @@ const monitorRoutes = require("./routes/monitor");
 const reportRoutes = require("./routes/reports");
 const userRoutes = require("./routes/users");
 const monitorWebsites = require("./middleware/monitor");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.use("/", reportRoutes);
 
 // Start monitoring on server start
 // monitorWebsites();
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 8000;
 

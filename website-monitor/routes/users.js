@@ -1,7 +1,14 @@
 const express = require("express");
 const { check, body } = require("express-validator");
-const { createUser, verifyUser } = require("../controllers/users");
+const {
+  createUser,
+  verifyUser,
+  loginUser,
+  forgotPassword,
+  resetPassword,
+} = require("../controllers/users");
 const Users = require("../models/users");
+const { refreshAccessToken } = require("../controllers/tokens");
 const router = express.Router();
 
 router.post(
@@ -50,5 +57,10 @@ router.post(
 );
 
 router.get("/verify/:email/:token", verifyUser);
+
+router.post("/login", loginUser);
+router.post("/refresh", refreshAccessToken);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:email/:token", resetPassword);
 
 module.exports = router;
