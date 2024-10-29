@@ -3,6 +3,20 @@ const User = require("../models/users");
 
 let job;
 
+// Function to delete expired unverified users on startup
+const deleteExpiredUnverifiedUsers = async () => {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  try {
+    const result = await User.deleteMany({
+      verified: false,
+      createdAt: { $lt: oneHourAgo },
+    });
+    console.log(`Deleted ${result.deletedCount} unverified users on startup.`);
+  } catch (err) {
+    console.error("Error deleting unverified users on startup:", err);
+  }
+};
+
 const deleteUnverifiedUsersJob = () => {
   job = new cron.CronJob("0 * * * *", async () => {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -17,8 +31,10 @@ const deleteUnverifiedUsersJob = () => {
     }
   });
 
-  job.start(); // Start the cron job
+  job.start();
   console.log("Cron job for deleting unverified users is scheduled.");
+
+  deleteExpiredUnverifiedUsers();
 };
 
 // Function to stop the job

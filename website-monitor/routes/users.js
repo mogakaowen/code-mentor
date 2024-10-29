@@ -4,6 +4,7 @@ const {
   createUser,
   verifyUser,
   loginUser,
+  logoutUser,
   forgotPassword,
   resetPassword,
 } = require("../controllers/users");
@@ -62,5 +63,6 @@ router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:email/:token", resetPassword);
+router.post("/logout", logoutUser);
 
 module.exports = router;

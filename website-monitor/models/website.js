@@ -12,7 +12,7 @@ const websiteSchema = new mongoose.Schema({
   },
   lastChecked: {
     type: Date,
-    default: Date.now,
+    default: null,
   },
   userID: {
     type: mongoose.Schema.Types.ObjectId,

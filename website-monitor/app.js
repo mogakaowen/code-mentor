@@ -8,7 +8,6 @@ const cookieParser = require("cookie-parser");
 const websiteRoutes = require("./routes/website");
 const reportRoutes = require("./routes/reports");
 const userRoutes = require("./routes/users");
-const monitorWebsites = require("./middleware/monitor");
 const errorHandler = require("./middleware/errorHandler");
 const authenticate = require("./middleware/authenticate");
 const {
@@ -28,9 +27,6 @@ deleteUnverifiedUsersJob();
 app.use("/users", userRoutes);
 app.use("/websites", authenticate, websiteRoutes);
 app.use("/reports", authenticate, reportRoutes);
-
-// Start monitoring on server start
-// monitorWebsites();
 
 app.use(errorHandler);
 

@@ -23,7 +23,16 @@ async function checkWebsite(website) {
     const statusCode = response.status;
 
     // Log status to database
-    await new StatusLog({ websiteId: website._id, statusCode }).save();
+    const statusLog = await new StatusLog({
+      websiteId: website._id,
+      statusCode,
+    }).save();
+
+    // Update the website's lastChecked to the current date
+    await Website.findByIdAndUpdate(website._id, {
+      lastChecked: statusLog.checkedAt,
+      status: statusCode === 200 ? "up" : "down",
+    });
 
     if (statusCode !== 200) {
       sendAlert(
@@ -39,13 +48,19 @@ async function checkWebsite(website) {
       websiteId: website._id,
       statusCode: error.response?.status || 500,
     }).save();
+
+    // Update the website's lastChecked to the current date on error as well
+    await Website.findByIdAndUpdate(website._id, {
+      lastChecked: Date.now(),
+      status: "down",
+    });
   }
 }
 
 function sendAlert(website, message) {
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to: website.email,
+    to: website.user.email,
     subject: "Website Down Alert",
     text: message,
   };
@@ -85,13 +100,31 @@ function scheduleMonitoringJob(website) {
   }
 }
 
-function monitorWebsites() {
-  setInterval(async () => {
-    const websites = await Website.find();
+async function monitorWebsites(user) {
+  console.log(user);
+  // Check if monitoring is already set up for this user
+  if (monitoredWebsites.has(user._id.toString())) {
+    return; // Skip if already monitoring
+  }
 
-    websites.forEach((website) => {
+  // Fetch websites associated with the user
+  const websites = await Website.find({ userID: user._id }).populate("userID");
+
+  websites.forEach((website) => {
+    if (!monitoredWebsites.has(website._id.toString())) {
+      console.log(`Starting monitoring for: ${website.url}`);
+      scheduleMonitoringJob(website);
+    }
+  });
+
+  // Set an interval to check for new websites every minute
+  setInterval(async () => {
+    const updatedWebsites = await Website.find({ userID: user._id }).populate(
+      "userID"
+    );
+
+    updatedWebsites.forEach((website) => {
       if (!monitoredWebsites.has(website._id.toString())) {
-        // Schedule new website for monitoring
         console.log(`Starting monitoring for: ${website.url}`);
         scheduleMonitoringJob(website);
       }
@@ -99,7 +132,9 @@ function monitorWebsites() {
 
     // Clean up jobs for removed websites
     monitoredWebsites.forEach((job, websiteId) => {
-      if (!websites.some((website) => website._id.toString() === websiteId)) {
+      if (
+        !updatedWebsites.some((website) => website._id.toString() === websiteId)
+      ) {
         job.stop();
         monitoredWebsites.delete(websiteId);
         console.log(`Stopped monitoring for removed website ID: ${websiteId}`);
@@ -108,4 +143,13 @@ function monitorWebsites() {
   }, 60000); // Check for new websites every 1 minute
 }
 
-module.exports = monitorWebsites;
+function stopMonitoring(userID) {
+  const job = monitoredWebsites.get(userID.toString());
+  if (job) {
+    job.stop(); // Stop the cron job
+    monitoredWebsites.delete(userID.toString()); // Remove from the map
+    console.log(`Stopped monitoring for user ID: ${userID}`);
+  }
+}
+
+module.exports = { monitorWebsites, stopMonitoring };

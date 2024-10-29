@@ -9,6 +9,8 @@ const Token = require("../models/tokens");
 const { createToken } = require("./tokens");
 const { type } = require("os");
 
+const { stopMonitoring, monitorWebsites } = require("../middleware/monitor");
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -149,7 +151,9 @@ exports.loginUser = async (req, res, next) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    req.user = user;
+    // Start monitoring for the logged-in user
+    await monitorWebsites(user);
+
     res.send({
       message: "User logged in successfully.",
       accessToken,
@@ -157,6 +161,13 @@ exports.loginUser = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+exports.logoutUser = async (req, res) => {
+  stopMonitoring(req.user.id);
+
+  res.clearCookie("refreshToken");
+  res.send({ message: "User logged out successfully." });
 };
 
 exports.forgotPassword = async (req, res) => {
