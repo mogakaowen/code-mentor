@@ -1,8 +1,8 @@
 const express = require("express");
-
-const { getReport } = require("../controllers/reports");
 const router = express.Router();
 
-router.get("/:id", getReport);
+const { getReport } = require("../controllers/reports");
+
+router.get("/:websiteId", getReport);
 
 module.exports = router;
