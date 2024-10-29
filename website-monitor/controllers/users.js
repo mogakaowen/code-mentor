@@ -122,7 +122,12 @@ exports.loginUser = async (req, res, next) => {
 
     // Generate access token with 5-minute expiration
     const accessToken = jwt.sign(
-      { email: user.email, id: user._id, type: "access" },
+      {
+        email: user.email,
+        id: user._id,
+        type: "access",
+        tokenVersion: user.tokenVersion,
+      },
       process.env.ACCESS_TOKEN_SECRET,
       {
         expiresIn: "5m",
@@ -164,10 +169,23 @@ exports.loginUser = async (req, res, next) => {
 };
 
 exports.logoutUser = async (req, res) => {
-  stopMonitoring(req.user.id);
+  try {
+    // Stop monitoring for the logged-in user
+    stopMonitoring(req.user.id);
 
-  res.clearCookie("refreshToken");
-  res.send({ message: "User logged out successfully." });
+    // Find the user by ID and increment the tokenVersion
+    await Users.findByIdAndUpdate(req.user.id, {
+      $inc: { tokenVersion: 1 },
+    });
+
+    // Clear the refresh token cookie
+    res.clearCookie("refreshToken");
+
+    res.send({ message: "User logged out successfully." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: "Internal server error." });
+  }
 };
 
 exports.forgotPassword = async (req, res) => {

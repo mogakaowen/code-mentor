@@ -10,6 +10,7 @@ const {
 } = require("../controllers/users");
 const Users = require("../models/users");
 const { refreshAccessToken } = require("../controllers/tokens");
+const authenticate = require("../middleware/authenticate");
 const router = express.Router();
 
 router.post(
@@ -63,6 +64,6 @@ router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:email/:token", resetPassword);
-router.post("/logout", logoutUser);
+router.post("/logout", authenticate, logoutUser);
 
 module.exports = router;

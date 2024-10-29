@@ -27,7 +27,7 @@ const reportSchema = new mongoose.Schema({
     type: Number,
     default: 0, // in seconds
   },
-  responseTime: {
+  avgResponseTime: {
     type: Number,
     default: 0, // in milliseconds
   },

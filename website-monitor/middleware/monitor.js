@@ -46,7 +46,7 @@ async function checkWebsite(website) {
         outages: 0,
         downtime: 0,
         uptime: 0,
-        responseTime: 0,
+        avgResponseTime: 0,
         history: [],
       });
     }
@@ -71,8 +71,8 @@ async function checkWebsite(website) {
       status: report.status,
       responseTime,
     });
-    report.responseTime =
-      (report.responseTime * (report.history.length - 1) + responseTime) /
+    report.avgResponseTime =
+      (report.avgResponseTime * (report.history.length - 1) + responseTime) /
       report.history.length;
 
     // Calculate availability
@@ -102,7 +102,7 @@ async function checkWebsite(website) {
         outages: 0,
         downtime: 0,
         uptime: 0,
-        responseTime: 0,
+        avgResponseTime: 0,
         history: [],
       });
     }
@@ -147,7 +147,7 @@ function convertToCronFormat(interval) {
   if (interval < 1) {
     throw new Error("Interval must be at least 1 minute.");
   }
-  return `*/${interval} * * * *`; // Croneexpression for every 'n' minutes
+  return `*/${interval} * * * *`; // Cron expression for every 'n' minutes
 }
 
 function scheduleMonitoringJob(website) {
