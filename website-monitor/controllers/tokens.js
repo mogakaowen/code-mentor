@@ -1,7 +1,10 @@
+require("dotenv").config();
+
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
 const Token = require("../models/tokens");
+const Users = require("../models/users");
 
 exports.createToken = async (userID, expiresInSeconds) => {
   try {
@@ -17,7 +20,7 @@ exports.createToken = async (userID, expiresInSeconds) => {
 };
 
 exports.refreshAccessToken = async (req, res, next) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
     return res.status(401).send({ error: "Refresh token is required." });
@@ -25,26 +28,24 @@ exports.refreshAccessToken = async (req, res, next) => {
 
   try {
     // Verify the refresh token
-    const secretKey = process.env.SECRET_KEY;
-    const decoded = jwt.verify(refreshToken, secretKey);
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-    // Check if the token exists in the database
-    const tokenEntry = await Token.findOne({
-      userID: decoded.id,
-      token: refreshToken,
-    });
-
-    if (!tokenEntry) {
+    if (decoded.type !== "refresh") {
       return res.status(403).send({ error: "Invalid refresh token." });
+    }
+
+    // Find the user by ID and check the token version
+    const user = await Users.findById(decoded.id);
+
+    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+      return res.status(403).send({ error: "Token is no longer valid." });
     }
 
     // Generate a new access token
     const accessToken = jwt.sign(
-      { email: decoded.email, id: decoded.id },
-      secretKey,
-      {
-        expiresIn: "5m",
-      }
+      { email: decoded.email, id: decoded.id, type: "access" },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "5m" }
     );
 
     res.send({ accessToken });

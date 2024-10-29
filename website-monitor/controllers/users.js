@@ -2,12 +2,12 @@ require("dotenv").config();
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { validationResult } = require("express-validator");
 const Users = require("../models/users");
 const Token = require("../models/tokens");
 const { createToken } = require("./tokens");
+const { type } = require("os");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -33,6 +33,7 @@ exports.createUser = async (req, res) => {
       username,
       password: hashedPassword,
     });
+
     const createdUser = await user.save();
     const createdToken = await createToken(createdUser._id, 3600);
     const url = `http://localhost:8000/users/verify/${email}/${createdToken.token}`;
@@ -50,6 +51,8 @@ exports.createUser = async (req, res) => {
       await transporter.sendMail(mailOptions);
       res.send({
         message: "User created successfully. Please verify your email.",
+        email: createdUser.email,
+        token: createdToken.token,
       });
     } catch (emailError) {
       // If sending email fails, delete the created user
@@ -115,12 +118,10 @@ exports.loginUser = async (req, res, next) => {
       return res.status(403).send({ error: "Incorrect password." });
     }
 
-    const secretKey = process.env.SECRET_KEY;
-
     // Generate access token with 5-minute expiration
     const accessToken = jwt.sign(
-      { email: user.email, id: user._id },
-      secretKey,
+      { email: user.email, id: user._id, type: "access" },
+      process.env.ACCESS_TOKEN_SECRET,
       {
         expiresIn: "5m",
       }
@@ -128,25 +129,29 @@ exports.loginUser = async (req, res, next) => {
 
     // Generate refresh token with 1-day expiration
     const refreshToken = jwt.sign(
-      { email: user.email, id: user._id },
-      secretKey,
+      {
+        email: user.email,
+        id: user._id,
+        type: "refresh",
+        tokenVersion: user.tokenVersion,
+      },
+      process.env.REFRESH_TOKEN_SECRET,
       {
         expiresIn: "1d",
       }
     );
 
-    // Optional: Store the refresh token in the database
-    const tokenEntry = new Token({
-      userID: user._id,
-      token: refreshToken,
-      expiresAt: new Date(Date.now() + 86400000), // 86400000 ms = 1 day
+    // Set the refresh token as an HTTP-only cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 24 * 60 * 60 * 1000,
     });
-    await tokenEntry.save();
 
     res.send({
       message: "User logged in successfully.",
       accessToken,
-      refreshToken,
     });
   } catch (err) {
     next(err);
@@ -164,15 +169,18 @@ exports.forgotPassword = async (req, res) => {
     }
 
     // Generate a password reset token
-    const token = crypto.randomBytes(32).toString("hex");
-
-    // Save the token with an expiration time (1 hour in this example)
-    const tokenEntry = new Token({
-      userID: user._id, // Assuming the user model has an _id
-      token,
-      expiresAt: new Date(Date.now() + 3600000), // 3600000 ms = 1 hour
-    });
-    await tokenEntry.save();
+    const token = jwt.sign(
+      {
+        email: user.email,
+        userID: user._id,
+        type: "reset",
+        tokenVersion: user.tokenVersion,
+      },
+      process.env.SECRET_KEY,
+      {
+        expiresIn: "1h",
+      }
+    );
 
     const url = `http://localhost:8000/users/reset-password/${email}/${token}`;
     console.log("url", url);
@@ -197,35 +205,38 @@ exports.resetPassword = async (req, res) => {
   const { password } = req.body;
 
   try {
-    // Find the user
-    const user = await Users.findOne({ email });
+    // Verify the JWT
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+
+    if (decoded.type !== "reset") {
+      return res.status(403).send({ error: "Invalid token type." });
+    }
+
+    const user = await Users.findOne({ _id: decoded.userID, email });
 
     if (!user) {
-      return res.status(404).send({ error: "User not found." });
+      return res
+        .status(404)
+        .send({ error: "User not found or token invalid." });
     }
 
-    // Find the token and check if it is valid (not expired)
-    const tokenEntry = await Token.findOne({ userID: user._id, token });
-
-    if (!tokenEntry) {
-      return res.status(403).send({ error: "Invalid or expired token." });
+    // Check if token version matches
+    if (decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(403).send({ error: "Token is no longer valid." });
     }
 
-    // Check if the token is expired (1 hour)
-    const isExpired = Date.now() - tokenEntry.createdAt > 3600000; // 3600000 ms = 1 hour
-    if (isExpired) {
-      return res.status(403).send({ error: "Token has expired." });
-    }
-
-    // Hash the new password and save it
+    // Hash and save the new password
     user.password = await bcrypt.hash(password, 12);
-    await user.save();
 
-    // Optionally, you might want to delete the token after successful reset
-    await Token.deleteOne({ _id: tokenEntry._id });
+    // Increment the token version after resetting password to invalidate old tokens
+    user.tokenVersion += 1;
+    await user.save();
 
     res.send({ message: "Password reset successfully." });
   } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(403).send({ error: "Token has expired." });
+    }
     console.error("Error in resetPassword:", err);
     res.status(500).send({ error: "Could not reset password." });
   }
