@@ -1,4 +1,6 @@
 const Website = require("../models/website");
+const StatusLog = require("../models/status-log");
+const Report = require("../models/report");
 
 // Add a new website to monitor
 exports.addNewWebsite = async (req, res) => {
@@ -27,6 +29,10 @@ exports.removeWebsite = async (req, res) => {
         .status(404)
         .send({ error: "Website not found or not authorized" });
     }
+
+    // Delete associated status logs and reports
+    await StatusLog.deleteMany({ websiteId: website._id });
+    await Report.deleteMany({ websiteId: website._id });
 
     res.status(200).send({ message: "Website removed successfully" });
   } catch (err) {

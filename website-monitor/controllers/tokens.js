@@ -43,7 +43,12 @@ exports.refreshAccessToken = async (req, res, next) => {
 
     // Generate a new access token
     const accessToken = jwt.sign(
-      { email: decoded.email, id: decoded.id, type: "access" },
+      {
+        email: decoded.email,
+        id: decoded.id,
+        type: "access",
+        tokenVersion: decoded.tokenVersion,
+      },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "5m" }
     );

@@ -25,40 +25,43 @@ async function checkWebsite(website) {
     const responseTime = Date.now() - new Date(website.lastChecked).getTime();
 
     // Log status to database
-    const statusLog = await new StatusLog({
+    await new StatusLog({
       websiteId: website._id,
       statusCode,
     }).save();
 
     // Update the website's lastChecked and status
     await Website.findByIdAndUpdate(website._id, {
-      lastChecked: statusLog.checkedAt,
+      lastChecked: Date.now(),
       status: statusCode === 200 ? "up" : "down",
     });
 
     // Fetch or create report for this website
-    let report = await Report.findOne({ websiteId: website._id });
-    if (!report) {
-      report = new Report({
-        websiteId: website._id,
-        status: "up",
-        availability: 100,
-        outages: 0,
-        downtime: 0,
-        uptime: 0,
-        avgResponseTime: 0,
-        history: [],
-      });
-    }
+    let report = await Report.findOneAndUpdate(
+      { websiteId: website._id },
+      {
+        $setOnInsert: {
+          status: "up",
+          availability: 100,
+          outages: 0,
+          downtime: 0,
+          uptime: 0,
+          avgResponseTime: 0,
+          history: [],
+        },
+      },
+      { upsert: true, new: true }
+    );
 
     // Update report based on status
     if (statusCode === 200) {
       report.status = "up";
       report.uptime += responseTime / 1000;
+      report.downtime = Math.max(0, report.downtime - responseTime / 1000); // Adjust downtime
     } else {
       report.status = "down";
       report.outages += 1;
-      report.downtime += responseTime / 1000;
+      report.downtime += 60; // Assume downtime of 60 seconds
       sendAlert(
         website,
         `Website ${website.url} is down with status code ${statusCode}`
@@ -71,6 +74,8 @@ async function checkWebsite(website) {
       status: report.status,
       responseTime,
     });
+
+    // Update average response time
     report.avgResponseTime =
       (report.avgResponseTime * (report.history.length - 1) + responseTime) /
       report.history.length;
@@ -83,38 +88,43 @@ async function checkWebsite(website) {
 
     await report.save();
   } catch (error) {
-    sendAlert(website, `Website ${website.url} check failed.`);
     const statusCode = error.response?.status || 500;
-
-    // Log error status
     await new StatusLog({
       websiteId: website._id,
-      statusCode: error.response?.status || 500,
+      statusCode,
     }).save();
 
-    // Update downtime and report
-    let report = await Report.findOne({ websiteId: website._id });
-    if (!report) {
-      report = new Report({
-        websiteId: website._id,
-        status: "down",
-        availability: 100,
-        outages: 0,
-        downtime: 0,
-        uptime: 0,
-        avgResponseTime: 0,
-        history: [],
-      });
-    }
+    // Fetch or create report
+    let report = await Report.findOneAndUpdate(
+      { websiteId: website._id },
+      {
+        $setOnInsert: {
+          status: "down",
+          availability: 100,
+          outages: 0,
+          downtime: 0,
+          uptime: 0,
+          avgResponseTime: 0,
+          history: [],
+        },
+      },
+      { upsert: true, new: true }
+    );
 
+    // Update report
     report.status = "down";
     report.outages += 1;
-    report.downtime += 60; // Assume downtime of 60 seconds if an error occurs without response time
+    report.downtime += 60; // Assume downtime of 60 seconds
     report.history.push({
       timestamp: new Date(),
       status: "down",
       responseTime: null,
     });
+
+    // Calculate availability safely
+    const totalTime = report.uptime + report.downtime;
+    report.availability =
+      totalTime > 0 ? ((report.uptime / totalTime) * 100).toFixed(2) : 0;
 
     await report.save();
 
@@ -123,13 +133,15 @@ async function checkWebsite(website) {
       lastChecked: Date.now(),
       status: "down",
     });
+
+    sendAlert(website, `Website ${website.url} check failed.`);
   }
 }
 
 function sendAlert(website, message) {
   const mailOptions = {
     from: process.env.USER,
-    to: website.user.email,
+    to: website.userID.email,
     subject: "Website Down Alert",
     text: message,
   };
@@ -177,6 +189,7 @@ async function monitorWebsites(user) {
 
   // Fetch websites associated with the user
   const websites = await Website.find({ userID: user._id }).populate("userID");
+  console.log(websites);
 
   websites.forEach((website) => {
     if (!monitoredWebsites.has(website._id.toString())) {
