@@ -5,7 +5,7 @@ const {
   addNewWebsite,
   removeWebsite,
   getAllWebsites,
-} = require("../controllers/monitor");
+} = require("../controllers/website");
 
 // Route to add a new website to monitor
 router.post("/add", addNewWebsite);

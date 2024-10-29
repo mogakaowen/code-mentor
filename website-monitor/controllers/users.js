@@ -149,6 +149,7 @@ exports.loginUser = async (req, res, next) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
+    req.user = user;
     res.send({
       message: "User logged in successfully.",
       accessToken,

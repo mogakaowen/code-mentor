@@ -4,9 +4,21 @@ const mongoose = require("mongoose");
 
 const websiteSchema = new mongoose.Schema({
   url: { type: String, required: true, unique: true },
-  email: { type: String, required: true },
   interval: { type: Number, default: process.env.CHECK_INTERVAL },
-  lastStatus: { type: String, default: "Unknown" },
+  status: {
+    type: String,
+    enum: ["up", "down", "unknown"],
+    default: "unknown",
+  },
+  lastChecked: {
+    type: Date,
+    default: Date.now,
+  },
+  userID: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Users",
+    required: true,
+  },
 });
 
 module.exports = mongoose.model("Website", websiteSchema);
