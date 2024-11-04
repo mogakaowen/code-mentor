@@ -50,8 +50,8 @@ const checkLoggedInUsers = async () => {
     const users = await Users.find({ isLoggedIn: true }); // Fetch all logged-in users
     for (const user of users) {
       // Start monitoring for this user
+      console.log(`Server automatic monitoring for user: ${user.email}`);
       await monitorWebsites(user);
-      console.log(`Started monitoring for user: ${user.email}`);
     }
   } catch (error) {
     console.error("Error checking logged-in users:", error);

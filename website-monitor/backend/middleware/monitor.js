@@ -25,7 +25,17 @@ let monitoringIntervals = new Map();
 
 async function checkWebsite(website) {
   try {
-    const response = await axios.get(website.url);
+    const response = await axios.get(website.url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        Connection: "keep-alive",
+      },
+    });
+
     const statusCode = response.status;
     const responseTime = Date.now() - new Date(website.lastChecked).getTime();
 
@@ -62,14 +72,14 @@ async function checkWebsite(website) {
     if (statusCode === 200) {
       report.status = "up";
       report.uptime += responseTime / 1000;
-      report.downtime = Math.max(0, report.downtime - responseTime / 1000); // Adjust downtime
+      report.downtime = Math.max(0, report.downtime - responseTime / 1000);
     } else {
       report.status = "down";
       report.outages += 1;
-      report.downtime += 60; // Assume downtime of 60 seconds
+      report.downtime += 60;
       sendAlert(
         website,
-        `Website ${website.url} is down with status code ${statusCode}`
+        `Website ${website.url} is down. Status code: ${statusCode}`
       );
     }
 
@@ -94,6 +104,9 @@ async function checkWebsite(website) {
     await report.save();
   } catch (error) {
     const statusCode = error.response?.status || 500;
+    const reason =
+      error.response?.statusText || error.message || "Unknown Error";
+
     await new StatusLog({
       websiteId: website._id,
       statusCode,
@@ -119,7 +132,7 @@ async function checkWebsite(website) {
     // Update report
     report.status = "down";
     report.outages += 1;
-    report.downtime += 60; // Assume downtime of 60 seconds
+    report.downtime += 60;
     report.history.push({
       timestamp: new Date(),
       status: "down",
@@ -139,7 +152,10 @@ async function checkWebsite(website) {
       status: "down",
     });
 
-    sendAlert(website, `Website ${website.url} check failed.`);
+    sendAlert(
+      website,
+      `Website ${website.url} check failed.\nStatus code: ${statusCode}\nReason: ${reason}`
+    );
   }
 }
 
@@ -155,7 +171,7 @@ function sendAlert(website, message) {
     if (error) {
       console.error(`Failed to send alert for ${website.url}:`, error);
     } else {
-      console.log(`Alert sent for ${website.url}:`, info.response);
+      console.log(`Alert sent for ${website.url}:`, message);
     }
   });
 }
@@ -193,8 +209,6 @@ function scheduleMonitoringJob(userId, website) {
 }
 
 async function monitorWebsites(user) {
-  console.log(user);
-
   // Check if monitoring is already set up for this user
   if (monitoredUsers.has(user._id.toString())) {
     return; // Skip if already monitoring
