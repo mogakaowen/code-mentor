@@ -151,6 +151,12 @@ exports.loginUser = async (req, res, next) => {
       }
     );
 
+    user.isLoggedIn = true;
+    await user.save();
+
+    // Start monitoring for the logged-in user
+    await monitorWebsites(user);
+
     // Set the refresh token as an HTTP-only cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -158,9 +164,6 @@ exports.loginUser = async (req, res, next) => {
       sameSite: "Strict",
       maxAge: 24 * 60 * 60 * 1000,
     });
-
-    // Start monitoring for the logged-in user
-    await monitorWebsites(user);
 
     res.send({
       message: "User logged in successfully.",
@@ -179,6 +182,7 @@ exports.logoutUser = async (req, res) => {
     // Find the user by ID and increment the tokenVersion
     await Users.findByIdAndUpdate(req.user.id, {
       $inc: { tokenVersion: 1 },
+      isLoggedIn: false,
     });
 
     // Clear the refresh token cookie

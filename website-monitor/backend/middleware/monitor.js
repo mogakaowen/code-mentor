@@ -19,7 +19,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-let monitoredWebsites = new Map();
+// Use a Map to associate users with their monitored websites and jobs
+let monitoredUsers = new Map();
+let monitoringIntervals = new Map();
 
 async function checkWebsite(website) {
   try {
@@ -165,14 +167,20 @@ function convertToCronFormat(interval) {
   return `*/${interval} * * * *`; // Cron expression for every 'n' minutes
 }
 
-function scheduleMonitoringJob(website) {
+function scheduleMonitoringJob(userId, website) {
   try {
     const cronExpression = convertToCronFormat(website.interval);
     const job = new cron.CronJob(cronExpression, () => {
       checkWebsite(website);
     });
     job.start();
-    monitoredWebsites.set(website._id.toString(), job);
+
+    // Create or update user jobs map
+    if (!monitoredUsers.has(userId.toString())) {
+      monitoredUsers.set(userId.toString(), new Map());
+    }
+    monitoredUsers.get(userId.toString()).set(website._id.toString(), job);
+
     console.log(
       `Scheduled monitoring job for ${website.url} with interval ${website.interval} minutes`
     );
@@ -185,55 +193,71 @@ function scheduleMonitoringJob(website) {
 }
 
 async function monitorWebsites(user) {
+  console.log(user);
+
   // Check if monitoring is already set up for this user
-  if (monitoredWebsites.has(user._id.toString())) {
+  if (monitoredUsers.has(user._id.toString())) {
     return; // Skip if already monitoring
   }
 
   // Fetch websites associated with the user
   const websites = await Website.find({ userID: user._id }).populate("userID");
-  console.log(websites);
 
   websites.forEach((website) => {
-    if (!monitoredWebsites.has(website._id.toString())) {
+    if (!monitoredUsers.get(user._id.toString())?.has(website._id.toString())) {
       console.log(`Starting monitoring for: ${website.url}`);
-
-      scheduleMonitoringJob(website);
+      scheduleMonitoringJob(user._id, website);
     }
   });
 
   // Set an interval to check for new websites every minute
-  setInterval(async () => {
+  const intervalId = setInterval(async () => {
     const updatedWebsites = await Website.find({ userID: user._id }).populate(
       "userID"
     );
 
     updatedWebsites.forEach((website) => {
-      if (!monitoredWebsites.has(website._id.toString())) {
+      if (
+        !monitoredUsers.get(user._id.toString())?.has(website._id.toString())
+      ) {
         console.log(`Starting monitoring for: ${website.url}`);
-        scheduleMonitoringJob(website);
+        scheduleMonitoringJob(user._id, website);
       }
     });
 
     // Stop monitoring removed websites
-    monitoredWebsites.forEach((job, websiteId) => {
+    monitoredUsers.get(user._id.toString())?.forEach((job, websiteId) => {
       if (
         !updatedWebsites.some((website) => website._id.toString() === websiteId)
       ) {
         job.stop();
-        monitoredWebsites.delete(websiteId);
+        monitoredUsers.get(user._id.toString()).delete(websiteId);
         console.log(`Stopped monitoring for removed website ID: ${websiteId}`);
       }
     });
   }, 60000); // Check every minute for new websites
+
+  // Store the interval for this user
+  monitoringIntervals.set(user._id.toString(), intervalId);
 }
 
 function stopMonitoring(userID) {
-  const job = monitoredWebsites.get(userID.toString());
-  if (job) {
-    job.stop();
-    monitoredWebsites.delete(userID.toString());
+  const userJobs = monitoredUsers.get(userID.toString());
+  const intervalId = monitoringIntervals.get(userID.toString()); // Get the interval ID
+
+  if (userJobs) {
+    userJobs.forEach((job, websiteId) => {
+      job.stop();
+      console.log(`Stopped monitoring for website ID: ${websiteId}`);
+    });
+    monitoredUsers.delete(userID.toString());
     console.log(`Stopped monitoring for user ID: ${userID}`);
+  }
+
+  if (intervalId) {
+    clearInterval(intervalId); // Clear the interval
+    monitoringIntervals.delete(userID.toString()); // Remove from the Map
+    console.log(`Cleared monitoring interval for user ID: ${userID}`);
   }
 }
 

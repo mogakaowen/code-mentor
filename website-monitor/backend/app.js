@@ -14,6 +14,8 @@ const {
   deleteUnverifiedUsersJob,
   stopDeleteUnverifiedUsersJob,
 } = require("./middleware/deleteUnverified");
+const Users = require("./models/users");
+const { monitorWebsites } = require("./middleware/monitor");
 
 const app = express();
 
@@ -43,10 +45,25 @@ process.on("SIGTERM", () => {
   process.exit();
 });
 
+const checkLoggedInUsers = async () => {
+  try {
+    const users = await Users.find({ isLoggedIn: true }); // Fetch all logged-in users
+    for (const user of users) {
+      // Start monitoring for this user
+      await monitorWebsites(user);
+      console.log(`Started monitoring for user: ${user.email}`);
+    }
+  } catch (error) {
+    console.error("Error checking logged-in users:", error);
+  }
+};
+
+// Call this function when the server starts
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => {
+  .then(async () => {
     app.listen(PORT);
     console.log("Connected to MongoDB");
+    await checkLoggedInUsers();
   })
   .catch((err) => console.error("MongoDB connection error:", err));
