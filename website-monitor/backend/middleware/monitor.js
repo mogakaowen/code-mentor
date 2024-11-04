@@ -14,6 +14,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.USER,
     pass: process.env.PASS,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
 let monitoredWebsites = new Map();
