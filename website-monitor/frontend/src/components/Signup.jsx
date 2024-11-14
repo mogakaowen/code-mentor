@@ -12,6 +12,7 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,7 +22,16 @@ const Signup = () => {
     navigate("/auth/signin");
   };
 
-  const onFinish = () => {};
+  const onFinish = () => {
+    setIsLoading(true);
+    try {
+      console.log(formData);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Form name="signup" layout="vertical" onFinish={onFinish}>

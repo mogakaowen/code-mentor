@@ -26,7 +26,7 @@ const AuthLayout = ({ children }) => {
           className="min-h-screen bg-cover bg-center flex items-center justify-center p-4"
           style={{ backgroundImage: `url(${bgImage})` }}
         >
-          <div className="bg-white bg-opacity-80 p-8 rounded-lg shadow-md w-full max-w-md">
+          <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-md w-full max-w-md">
             {children}
           </div>
         </div>
