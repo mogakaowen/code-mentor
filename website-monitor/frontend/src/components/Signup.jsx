@@ -39,12 +39,13 @@ const Signup = () => {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
       const response = await axios.post(`${baseUrl}/users/signup`, dataToPost);
-      console.log("response", response);
-
       notification.success({
         message: "Signup Successful",
         description: response.data.message,
       });
+
+      // Redirect to login page after successful signup
+      navigate("/auth/signin");
     } catch (err) {
       console.log("error", err);
       notification.error({

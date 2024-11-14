@@ -6,6 +6,7 @@ import MainLayout from "./layout/MainLayout";
 
 // Lazy load the SignupPage component
 const SignupPage = lazy(() => import("./pages/Signup"));
+const VerifyUser = lazy(() => import("./pages/VerifyUser"));
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         {/* Auth Routes */}
         <Route path="/auth/*" element={<AuthRoutes />} />
+        <Route path="/auth/verify/:userId/:token" element={<VerifyUser />} />
 
         {/* Main Routes with Suspense for dynamic components */}
         <Route

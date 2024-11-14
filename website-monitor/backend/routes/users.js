@@ -58,7 +58,7 @@ router.post(
   createUser
 );
 
-router.put("/verify/:email/:token", verifyUser);
+router.put("/verify/:userId/:token", verifyUser);
 
 router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);

@@ -41,8 +41,7 @@ exports.createUser = async (req, res) => {
 
     const createdUser = await user.save();
     const createdToken = await createToken(createdUser._id, 3600);
-    const url = `http://localhost:8000/users/verify/${email}/${createdToken.token}`;
-    console.log("url", url);
+    const url = `${process.env.BASE_URL}/auth/verify/${createdUser._id}/${createdToken.token}`;
 
     // Send verification email here
     const mailOptions = {
@@ -56,7 +55,6 @@ exports.createUser = async (req, res) => {
       await transporter.sendMail(mailOptions);
       res.send({
         message: "User created successfully. Please verify your email.",
-        user: { email: createdUser.email, token: createdToken.token },
       });
     } catch (emailError) {
       // If sending email fails, delete the created user
@@ -73,9 +71,9 @@ exports.createUser = async (req, res) => {
 };
 
 exports.verifyUser = async (req, res) => {
-  const { email, token } = req.params;
+  const { userId, token } = req.params;
   try {
-    const user = await Users.findOne({ email });
+    const user = await Users.findOne({ _id: userId });
 
     if (!user) {
       return res.status(404).send({ error: "User not found." });
@@ -219,7 +217,6 @@ exports.forgotPassword = async (req, res) => {
     );
 
     const url = `http://localhost:8000/users/reset-password/${email}/${token}`;
-    console.log("url", url);
 
     const mailOptions = {
       from: process.env.USER,
@@ -237,7 +234,7 @@ exports.forgotPassword = async (req, res) => {
 };
 
 exports.resetPassword = async (req, res) => {
-  const { email, token } = req.params;
+  const { token } = req.params;
   const { password } = req.body;
 
   try {
@@ -248,7 +245,7 @@ exports.resetPassword = async (req, res) => {
       return res.status(403).send({ error: "Invalid token type." });
     }
 
-    const user = await Users.findOne({ _id: decoded.userID, email });
+    const user = await Users.findOne({ _id: decoded.userID });
 
     if (!user) {
       return res
