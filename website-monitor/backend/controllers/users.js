@@ -14,8 +14,8 @@ const { stopMonitoring, monitorWebsites } = require("../middleware/monitor");
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASSWORD,
+    user: process.env.USER,
+    pass: process.env.PASS,
   },
   tls: {
     rejectUnauthorized: false,
@@ -46,7 +46,7 @@ exports.createUser = async (req, res) => {
 
     // Send verification email here
     const mailOptions = {
-      from: process.env.EMAIL,
+      from: process.env.USER,
       to: email,
       subject: "Verify your email",
       html: `<p>Click <a href="${url}">here</a> to verify your email.</p>`, // Corrected line
@@ -56,13 +56,12 @@ exports.createUser = async (req, res) => {
       await transporter.sendMail(mailOptions);
       res.send({
         message: "User created successfully. Please verify your email.",
-        email: createdUser.email,
-        token: createdToken.token,
+        user: { email: createdUser.email, token: createdToken.token },
       });
     } catch (emailError) {
       // If sending email fails, delete the created user
-      //   await Users.deleteOne({ _id: createdUser._id });
-      //   await Token.deleteOne({ _id: createdToken._id });
+      await Users.deleteOne({ _id: createdUser._id });
+      await Token.deleteOne({ _id: createdToken._id });
       console.error("Failed to send email:", emailError);
       res
         .status(500)
@@ -223,7 +222,7 @@ exports.forgotPassword = async (req, res) => {
     console.log("url", url);
 
     const mailOptions = {
-      from: process.env.EMAIL,
+      from: process.env.USER,
       to: email,
       subject: "Reset your password",
       html: `<p>Click <a href="${url}">here</a> to reset your password. This link will only be open for one hour.</p>`,

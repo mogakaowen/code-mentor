@@ -1,9 +1,11 @@
-import { Form, Input, Button } from "antd";
+import axios from "axios";
+import { Form, Input, Button, notification } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const [form] = Form.useForm();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,19 +24,45 @@ const Signup = () => {
     navigate("/auth/signin");
   };
 
-  const onFinish = () => {
+  const onFinish = async (values) => {
     setIsLoading(true);
     try {
-      console.log(formData);
+      // validate form
+      await form.validateFields();
+      const dataToPost = {
+        name: formData.name,
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+      };
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+      const response = await axios.post(`${baseUrl}/users/signup`, dataToPost);
+      console.log("response", response);
+
+      notification.success({
+        message: "Signup Successful",
+        description: response.data.message,
+      });
     } catch (err) {
-      console.log(err);
+      console.log("error", err);
+      notification.error({
+        message: "Signup Failed",
+        description:
+          Array.isArray(err?.response?.data?.errors) &&
+          err.response.data.errors.length > 0
+            ? err.response.data.errors[0].msg
+            : err?.response?.data?.error ||
+              "An unknown error occurred. please try again later",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Form name="signup" layout="vertical" onFinish={onFinish}>
+    <Form name="signup" form={form} layout="vertical" onFinish={onFinish}>
       {/* Name */}
       <Form.Item
         label="Name"
@@ -43,6 +71,7 @@ const Signup = () => {
       >
         <Input
           placeholder="Enter your name"
+          name="name"
           value={formData.name}
           onChange={handleInputChange}
         />
@@ -56,6 +85,7 @@ const Signup = () => {
       >
         <Input
           placeholder="Enter your username"
+          name="username"
           value={formData.username}
           onChange={handleInputChange}
         />
@@ -72,6 +102,7 @@ const Signup = () => {
       >
         <Input
           placeholder="Enter your email"
+          name="email"
           value={formData.email}
           onChange={handleInputChange}
         />
@@ -85,6 +116,7 @@ const Signup = () => {
       >
         <Input.Password
           placeholder="Enter your password"
+          name="password"
           value={formData.password}
           onChange={handleInputChange}
         />
@@ -109,6 +141,7 @@ const Signup = () => {
       >
         <Input.Password
           placeholder="Confirm your password"
+          name="confirmPassword"
           value={formData.confirmPassword}
           onChange={handleInputChange}
         />
@@ -122,6 +155,7 @@ const Signup = () => {
             htmlType="button"
             className="w-full shadow-none"
             onClick={handleNavigate}
+            disabled={isLoading}
           >
             Signin
           </Button>
@@ -129,6 +163,7 @@ const Signup = () => {
             type="primary"
             htmlType="submit"
             className="w-full shadow-none"
+            loading={isLoading}
           >
             Signup
           </Button>
