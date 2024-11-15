@@ -165,6 +165,11 @@ exports.loginUser = async (req, res, next) => {
     res.send({
       message: "User logged in successfully.",
       accessToken,
+      user: {
+        email: user.email,
+        name: user.name,
+        username: user.username,
+      },
     });
   } catch (err) {
     next(err);

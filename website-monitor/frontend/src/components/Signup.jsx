@@ -152,9 +152,8 @@ const Signup = () => {
       <Form.Item>
         <div className="flex flex-col md:flex-row gap-1">
           <Button
-            type="primary"
             htmlType="button"
-            className="w-full shadow-none"
+            className="w-full py-2 h-full shadow-none"
             onClick={handleNavigate}
             disabled={isLoading}
           >
@@ -163,7 +162,7 @@ const Signup = () => {
           <Button
             type="primary"
             htmlType="submit"
-            className="w-full shadow-none"
+            className="w-full py-2 h-full shadow-none"
             loading={isLoading}
           >
             Signup

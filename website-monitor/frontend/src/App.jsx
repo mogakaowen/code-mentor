@@ -3,9 +3,11 @@ import { Suspense, lazy } from "react";
 import { Loader, LoadingPage } from "./shared/Loading";
 import AuthLayout from "./layout/AuthLayout";
 import MainLayout from "./layout/MainLayout";
+import Home from "./shared/Home";
 
 // Lazy load the SignupPage component
 const SignupPage = lazy(() => import("./pages/Signup"));
+const LoginPage = lazy(() => import("./pages/Login"));
 const VerifyUser = lazy(() => import("./pages/VerifyUser"));
 
 function App() {
@@ -23,7 +25,7 @@ function App() {
             <Suspense fallback={<LoadingPage />}>
               <MainLayout>
                 <Routes>
-                  <Route path="/" element={<h1>Home</h1>} />
+                  <Route path="/" element={<Home />} />
                   {/* Add other main routes here */}
                 </Routes>
               </MainLayout>
@@ -43,6 +45,7 @@ const AuthRoutes = () => {
       <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/signin" element={<LoginPage />} />
         </Routes>
       </Suspense>
     </AuthLayout>
