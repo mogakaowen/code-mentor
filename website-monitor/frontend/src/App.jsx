@@ -9,6 +9,8 @@ import Home from "./shared/Home";
 const SignupPage = lazy(() => import("./pages/Signup"));
 const LoginPage = lazy(() => import("./pages/Login"));
 const VerifyUser = lazy(() => import("./pages/VerifyUser"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPassword"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPassword"));
 
 function App() {
   return (
@@ -46,6 +48,11 @@ const AuthRoutes = () => {
         <Routes>
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signin" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPasswordPage />}
+          />
         </Routes>
       </Suspense>
     </AuthLayout>

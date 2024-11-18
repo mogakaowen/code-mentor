@@ -105,7 +105,7 @@ const Home = () => {
           <motion.div variants={fadeInUp} className="mt-12">
             <button
               className="bg-gray-200 text-blue-500 px-8 py-3 font-semibold rounded-full hover:bg-gray-300"
-              onClick={() => navigate("/auth/signup")}
+              onClick={() => navigate("/auth/signin")}
             >
               Get Started
             </button>

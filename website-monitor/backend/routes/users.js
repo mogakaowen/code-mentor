@@ -65,7 +65,7 @@ router.post("/google-login", googleLogin);
 router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPassword);
-router.post("/reset-password/:email/:token", resetPassword);
+router.post("/reset-password/:token", resetPassword);
 router.post("/logout", authenticate, logoutUser);
 
 module.exports = router;

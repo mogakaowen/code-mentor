@@ -95,7 +95,7 @@ exports.googleLogin = async (req, res, next) => {
   }
 };
 
-exports.createUser = async (req, res) => {
+exports.createUser = async (req, res, next) => {
   const { email, name, username, password } = req.body;
   const errors = validationResult(req);
 
@@ -143,7 +143,7 @@ exports.createUser = async (req, res) => {
   }
 };
 
-exports.verifyUser = async (req, res) => {
+exports.verifyUser = async (req, res, next) => {
   const { userId, token } = req.params;
   try {
     const user = await Users.findOne({ _id: userId });
@@ -249,7 +249,7 @@ exports.loginUser = async (req, res, next) => {
   }
 };
 
-exports.logoutUser = async (req, res) => {
+exports.logoutUser = async (req, res, next) => {
   try {
     // Stop monitoring for the logged-in user
     stopMonitoring(req.user.id);
@@ -270,7 +270,7 @@ exports.logoutUser = async (req, res) => {
   }
 };
 
-exports.forgotPassword = async (req, res) => {
+exports.forgotPassword = async (req, res, next) => {
   const { email } = req.body;
 
   try {
@@ -294,7 +294,7 @@ exports.forgotPassword = async (req, res) => {
       }
     );
 
-    const url = `http://localhost:8000/users/reset-password/${email}/${token}`;
+    const url = `${process.env.BASE_URL}/users/reset-password/${token}`;
 
     const mailOptions = {
       from: process.env.USER,
@@ -311,7 +311,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-exports.resetPassword = async (req, res) => {
+exports.resetPassword = async (req, res, next) => {
   const { token } = req.params;
   const { password } = req.body;
 
