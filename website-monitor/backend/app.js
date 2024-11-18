@@ -24,6 +24,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cookieParser());
 
+app.use(function (req, res, next) {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp"); // This can help with cross-origin resources
+  next();
+});
+
 deleteUnverifiedUsersJob();
 
 app.use("/users", userRoutes);

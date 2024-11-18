@@ -7,6 +7,7 @@ const {
   logoutUser,
   forgotPassword,
   resetPassword,
+  googleLogin,
 } = require("../controllers/users");
 const Users = require("../models/users");
 const { refreshAccessToken } = require("../controllers/tokens");
@@ -60,6 +61,7 @@ router.post(
 
 router.put("/verify/:userId/:token", verifyUser);
 
+router.post("/google-login", googleLogin);
 router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPassword);

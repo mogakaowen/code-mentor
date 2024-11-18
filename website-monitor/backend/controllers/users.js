@@ -1,5 +1,8 @@
 require("dotenv").config();
 
+const { OAuth2Client } = require("google-auth-library");
+const admin = require("../utils/firebase");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
@@ -11,6 +14,8 @@ const { type } = require("os");
 
 const { stopMonitoring, monitorWebsites } = require("../middleware/monitor");
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -21,6 +26,71 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false,
   },
 });
+
+exports.googleLogin = async (req, res, next) => {
+  const { idToken } = req.body; // ID token sent from the client after Google Sign-In
+
+  try {
+    // Verify the ID token using Google Auth Library
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID, // Your Google client ID
+    });
+
+    const payload = ticket.getPayload();
+
+    // Check if the user exists
+    let user = await Users.findOne({ email: payload.email });
+
+    if (!user) {
+      // If user doesn't exist, create a new one
+      user = new Users({
+        email: payload.email,
+        name: payload.name,
+        username: payload.name, // Optionally use the name or any logic to set a username
+        verified: true, // Google sign-in users are considered verified
+      });
+      await user.save();
+    }
+
+    // Generate access and refresh tokens
+    const accessToken = jwt.sign(
+      { email: user.email, id: user._id, type: "access" },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "5m" }
+    );
+
+    const refreshToken = jwt.sign(
+      { email: user.email, id: user._id, type: "refresh" },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    user.isLoggedIn = true;
+    await user.save();
+
+    // Set the refresh token as an HTTP-only cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    res.send({
+      message: "User logged in successfully via Google.",
+      accessToken,
+      user: {
+        email: user.email,
+        name: user.name,
+        username: user.username,
+      },
+    });
+  } catch (error) {
+    console.error("Google login error:", error);
+    next(error);
+  }
+};
 
 exports.createUser = async (req, res) => {
   const { email, name, username, password } = req.body;
@@ -193,7 +263,7 @@ exports.logoutUser = async (req, res) => {
     res.send({ message: "User logged out successfully." });
   } catch (err) {
     console.error(err);
-    res.status(500).send({ error: "Internal server error." });
+    next(err);
   }
 };
 
@@ -234,7 +304,7 @@ exports.forgotPassword = async (req, res) => {
     res.send({ message: "Password reset email sent." });
   } catch (err) {
     console.error("Error in forgotPassword:", err);
-    res.status(500).send({ error: "Could not initiate password reset." });
+    next(err);
   }
 };
 
@@ -273,9 +343,9 @@ exports.resetPassword = async (req, res) => {
     res.send({ message: "Password reset successfully." });
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.status(403).send({ error: "Token has expired." });
+      next({ status: 403, message: "Token expired." });
     }
     console.error("Error in resetPassword:", err);
-    res.status(500).send({ error: "Could not reset password." });
+    next(err);
   }
 };

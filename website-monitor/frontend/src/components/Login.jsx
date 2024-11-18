@@ -35,10 +35,11 @@ const Login = () => {
       // Save token or other session data as needed here
       setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error) {
+      console.error("Login error:", error);
       notification.error({
         message: "Login Failed",
         description:
-          error?.response?.data?.message ||
+          error?.response?.data?.error ||
           "An error occurred. Please try again.",
       });
     } finally {
