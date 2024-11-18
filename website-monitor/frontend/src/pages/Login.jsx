@@ -4,63 +4,62 @@ import { GoogleOutlined } from "@ant-design/icons";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { initializeApp } from "firebase/app";
 import Login from "../components/Login";
-import { useState } from "react";
-
-// Firebase config setup...
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+import { auth } from "../utils/firebase";
 
 const LoginPage = () => {
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
+
+    // Force account selection by setting prompt parameter
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+
     try {
+      // Sign in with Google
       const result = await signInWithPopup(auth, provider);
 
-      // Extract ID Token after successful login
-      const idToken = await result.user.getIdToken();
+      if (!result) return;
 
-      // Send the ID token to the server for verification
+      // Extract Google credential and access token
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const googleToken = credential?.accessToken;
+
+      // Extract signed-in user information
+      const user = result.user;
+      const idToken = await user.getIdToken();
+
+      // Send idToken to the server for verification
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/users/google-login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
+          body: JSON.stringify({ idToken, googleToken }),
         }
       );
 
-      const data = await response.json();
-      console.log("data", data);
-
-      // Check the server's response and navigate if successful
-      if (response.ok) {
-        navigate("/dashboard"); // Redirect to the dashboard or another page
-      } else {
-        notification.error({
-          message: "Login Failed",
-          description:
-            data.message || "An error occurred during Google sign-in.",
-        });
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log("Server response:", data);
+
+      // Handle success (e.g., save user session, navigate to another page)
     } catch (error) {
-      console.error("Google sign-in error:", error);
-      notification.error({
-        message: "Google Sign-In Failed",
-        description:
-          error.message || "An error occurred during Google sign-in.",
-      });
+      // Handle errors
+      if (error.code === "auth/account-exists-with-different-credential") {
+        alert(
+          "You have already signed up with a different auth provider for that email."
+        );
+      } else if (error.code === "auth/popup-closed-by-user") {
+        console.warn("Popup closed by user before completing sign-in.");
+      } else {
+        console.error("Authentication error:", error.message, error.code);
+      }
     }
   };
 

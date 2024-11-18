@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const { OAuth2Client } = require("google-auth-library");
+const axios = require("axios");
 const admin = require("../utils/firebase");
 
 const bcrypt = require("bcryptjs");
@@ -14,8 +14,6 @@ const { type } = require("os");
 
 const { stopMonitoring, monitorWebsites } = require("../middleware/monitor");
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -28,16 +26,21 @@ const transporter = nodemailer.createTransport({
 });
 
 exports.googleLogin = async (req, res, next) => {
-  const { idToken } = req.body; // ID token sent from the client after Google Sign-In
-
+  const { idToken, googleToken } = req.body;
   try {
-    // Verify the ID token using Google Auth Library
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID, // Your Google client ID
-    });
+    const response = await axios.get(
+      `https://oauth2.googleapis.com/tokeninfo?access_token=${googleToken}`
+    );
+    // If the token is valid, the response contains token details
+    const tokenInfo = response.data;
 
-    const payload = ticket.getPayload();
+    // Check token's audience to ensure it matches your project
+    if (tokenInfo.aud !== process.env.GOOGLE_CLIENT_ID) {
+      return res.status(401).json({ message: "Invalid token audience" });
+    }
+
+    const payload = await admin.auth().verifyIdToken(idToken); // Use Firebase Admin SDK
+    console.log("payload", payload);
 
     // Check if the user exists
     let user = await Users.findOne({ email: payload.email });
