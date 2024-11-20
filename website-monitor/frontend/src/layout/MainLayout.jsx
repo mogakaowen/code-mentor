@@ -15,6 +15,10 @@ const MainLayout = ({ children }) => {
     navigate("/auth/signin", { replace: true });
   }, [navigate]);
 
+  const handleNavigate = () => {
+    navigate("/dashboard");
+  };
+
   useEffect(() => {
     if (!session?.accessToken) {
       // If no valid session, log out and redirect
@@ -34,11 +38,14 @@ const MainLayout = ({ children }) => {
   ];
 
   return (
-    <Layout className="min-h-screen">
+    <Layout className="min-h-screen max-w-[80rem]">
       {/* Navbar */}
       <Header className="flex justify-between items-center bg-white shadow-md px-6">
         {/* Left: Logo and Monitor Name */}
-        <div className="flex items-center space-x-2">
+        <div
+          className="flex items-center space-x-2 cursor-pointer hover:opacity-80"
+          onClick={handleNavigate}
+        >
           <LottieAnimation
             animation="/logoProfile.lottie"
             width="50px"
@@ -68,7 +75,7 @@ const MainLayout = ({ children }) => {
       </Header>
 
       {/* Content Area */}
-      <Content className="p-6 bg-gray-100">{children}</Content>
+      <Content className="p-6 bg-gray-100 w-full">{children}</Content>
 
       {/* Footer */}
       <Footer className="text-center bg-white shadow-md py-4">

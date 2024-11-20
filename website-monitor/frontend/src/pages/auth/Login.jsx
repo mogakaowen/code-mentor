@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Button, notification } from "antd";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import Login from "../components/Login";
-import { auth } from "../utils/firebase";
-import { setSessionData } from "../utils/localStorageService";
+import Login from "../../components/Login";
+import { auth } from "../../utils/firebase";
+import { setSessionData } from "../../utils/localStorageService";
 import axios from "axios";
 
 const GoogleIcon = () => (

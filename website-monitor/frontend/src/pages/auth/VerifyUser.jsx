@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { notification } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { LoadingPage } from "../shared/Loading";
+import { LoadingPage } from "../../shared/Loading";
 
 const VerifyUserPage = () => {
   const { userId, token } = useParams();

@@ -8,11 +8,13 @@ import MainLayout from "./layout/MainLayout";
 
 const Home = lazy(() => import("./shared/Home"));
 const Dashboard = lazy(() => import("./shared/Dashboard"));
-const SignupPage = lazy(() => import("./pages/Signup"));
-const LoginPage = lazy(() => import("./pages/Login"));
-const VerifyUser = lazy(() => import("./pages/VerifyUser"));
-const ForgotPasswordPage = lazy(() => import("./pages/ForgotPassword"));
-const ResetPasswordPage = lazy(() => import("./pages/ResetPassword"));
+const SignupPage = lazy(() => import("./pages/auth/Signup"));
+const LoginPage = lazy(() => import("./pages/auth/Login"));
+const VerifyUser = lazy(() => import("./pages/auth/VerifyUser"));
+const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPassword"));
+
+const WebsitesPage = lazy(() => import("./pages/websites/WebsiteList"));
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,7 @@ function App() {
                       <MainLayout>
                         <Routes>
                           <Route path="/dashboard" element={<Dashboard />} />
+                          <Route path="/websites" element={<WebsitesPage />} />
                         </Routes>
                       </MainLayout>
                     }
