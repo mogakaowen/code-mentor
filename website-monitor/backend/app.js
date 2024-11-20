@@ -18,23 +18,11 @@ const Users = require("./models/users");
 const { monitorWebsites } = require("./middleware/monitor");
 
 const app = express();
-
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Allow your frontend's origin
-    credentials: true, // Allow credentials like cookies
-  })
-);
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cookieParser());
-
-app.use(function (req, res, next) {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp"); // This can help with cross-origin resources
-  next();
-});
 
 deleteUnverifiedUsersJob();
 

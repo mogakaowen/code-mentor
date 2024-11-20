@@ -4,6 +4,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import Login from "../components/Login";
 import { auth } from "../utils/firebase";
 import { setSessionData } from "../utils/localStorageService";
+import axios from "axios";
 
 const GoogleIcon = () => (
   <svg
@@ -56,21 +57,23 @@ const LoginPage = () => {
       const user = result.user;
       const idToken = await user.getIdToken();
 
-      // Send idToken to the server for verification
-      const response = await fetch(
+      // Send idToken to the server for verification using axios
+      const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/users/google-login`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken, googleToken }),
+          idToken,
+          googleToken,
+        },
+        {
+          withCredentials: true,
         }
       );
 
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error(`Server responded with status ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = response.data;
 
       notification.success({
         message: "Success",

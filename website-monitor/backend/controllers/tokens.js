@@ -22,11 +22,11 @@ exports.createToken = async (userID, expiresInSeconds) => {
 exports.refreshAccessToken = async (req, res, next) => {
   const refreshToken = req.cookies.refreshToken;
 
-  if (!refreshToken) {
-    return res.status(401).send({ error: "Refresh token is required." });
-  }
-
   try {
+    if (!refreshToken) {
+      return res.status(401).send({ error: "Refresh token is required." });
+    }
+
     // Verify the refresh token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
@@ -55,6 +55,10 @@ exports.refreshAccessToken = async (req, res, next) => {
 
     res.send({ accessToken });
   } catch (err) {
+    console.error("Token verification error:", err); // Log the error for debugging
+    if (err instanceof jwt.TokenExpiredError) {
+      return res.status(401).send({ error: "Refresh token has expired." });
+    }
     return res.status(403).send({ error: "Invalid refresh token." });
   }
 };

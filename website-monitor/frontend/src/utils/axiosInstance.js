@@ -1,9 +1,15 @@
 import axios from "axios";
-import { getAccessToken, setAccessToken } from "./localStorageService";
+import {
+  getAccessToken,
+  logoutUser,
+  setAccessToken,
+} from "./localStorageService";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000", // Use env variable for flexibility
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+  },
   withCredentials: true, // Ensure cookies are sent with requests
 });
 
@@ -15,6 +21,7 @@ axiosInstance.interceptors.request.use(
       if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
+
       return config;
     } catch (error) {
       console.error("Error retrieving access token:", error);
@@ -28,30 +35,42 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error?.config;
+    console.log("Error response originalRequest:", originalRequest);
+    console.log("originalRequest._retry:", originalRequest?._retry);
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest.url === "/users/refresh"
+    ) {
+      //window.location.href = "/auth/signin"; // Redirect to login
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true;
+
       try {
         console.log("Refreshing token...");
         const response = await axiosInstance.post("/users/refresh"); // Cookie-based refresh token request
+        console.log("Response:", response);
         const newAccessToken = response?.data?.accessToken;
 
         if (newAccessToken) {
           setAccessToken(newAccessToken);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
           return axiosInstance(originalRequest);
         } else {
           // Clear local storage and redirect to login if refresh token is invalid
-          localStorage.clear();
-          window.location.href = "/auth/signin";
-          console.warn("Refresh token is invalid or missing.");
+          //  await logoutUser();
+          //window.location.href = "/auth/signin"; // Redirect to login
           return Promise.reject(error);
         }
       } catch (refreshError) {
         // Handle refresh token failure
-        localStorage.clear();
-        window.location.href = "/auth/signin";
+        // await logoutUser();
+        // window.location.href = "/auth/signin"; // Redirect to login
         console.error("Failed to refresh token:", refreshError);
         return Promise.reject(refreshError);
       }

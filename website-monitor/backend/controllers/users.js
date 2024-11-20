@@ -56,17 +56,32 @@ exports.googleLogin = async (req, res, next) => {
       await user.save();
     }
 
-    // Generate access and refresh tokens
+    // Generate access token with 5-minute expiration
     const accessToken = jwt.sign(
-      { email: user.email, id: user._id, type: "access" },
+      {
+        email: user.email,
+        id: user._id,
+        type: "access",
+        tokenVersion: user.tokenVersion,
+      },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "5m" }
+      {
+        expiresIn: "1m",
+      }
     );
 
+    // Generate refresh token with 1-day expiration
     const refreshToken = jwt.sign(
-      { email: user.email, id: user._id, type: "refresh" },
+      {
+        email: user.email,
+        id: user._id,
+        type: "refresh",
+        tokenVersion: user.tokenVersion,
+      },
       process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "1d" }
+      {
+        expiresIn: "1d",
+      }
     );
 
     user.isLoggedIn = true;
@@ -77,9 +92,9 @@ exports.googleLogin = async (req, res, next) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000,
+      path: "/", // Make the cookie available across all routes
     });
-
     res.send({
       message: "User logged in successfully via Google.",
       accessToken,
@@ -233,6 +248,7 @@ exports.loginUser = async (req, res, next) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       maxAge: 24 * 60 * 60 * 1000,
+      path: "/", // Make the cookie available across all routes
     });
 
     res.send({
@@ -250,12 +266,17 @@ exports.loginUser = async (req, res, next) => {
 };
 
 exports.logoutUser = async (req, res, next) => {
-  try {
-    // Stop monitoring for the logged-in user
-    stopMonitoring(req.user.id);
+  const { email } = req.body;
 
-    // Find the user by ID and increment the tokenVersion
-    await Users.findByIdAndUpdate(req.user.id, {
+  try {
+    // Find the user by email
+    const user = await Users.findOne({ email });
+
+    // Stop monitoring for the logged-in user
+    await stopMonitoring(user._id);
+
+    // Update the user to increment tokenVersion and set isLoggedIn to false
+    await Users.findByIdAndUpdate(user._id, {
       $inc: { tokenVersion: 1 },
       isLoggedIn: false,
     });
@@ -263,9 +284,9 @@ exports.logoutUser = async (req, res, next) => {
     // Clear the refresh token cookie
     res.clearCookie("refreshToken");
 
-    res.send({ message: "User logged out successfully." });
+    res.status(200).send({ message: "User logged out successfully." });
   } catch (err) {
-    console.error(err);
+    console.error("Error logging out user:", err);
     next(err);
   }
 };

@@ -20,8 +20,15 @@ const Login = () => {
         {
           email: values.email,
           password: values.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
         }
       );
+
       notification.success({
         message: "Login Successful",
         description: response?.data?.message,

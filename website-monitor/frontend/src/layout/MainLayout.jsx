@@ -1,11 +1,27 @@
-import React from "react";
+import React, { useEffect, useCallback } from "react";
 import { Layout, Menu, Button } from "antd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LottieAnimation from "../shared/LottiePlayer";
+import { getSessionData, logoutUser } from "../utils/localStorageService";
 
 const { Header, Content, Footer } = Layout;
 
 const MainLayout = ({ children }) => {
+  const navigate = useNavigate();
+  const session = getSessionData();
+
+  const handleLogout = useCallback(async () => {
+    await logoutUser();
+    navigate("/auth/signin", { replace: true });
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!session?.accessToken) {
+      // If no valid session, log out and redirect
+      handleLogout();
+    }
+  }, [session, handleLogout]);
+
   const items = [
     {
       key: "1",
@@ -41,7 +57,12 @@ const MainLayout = ({ children }) => {
         />
 
         {/* Right: Logout Button */}
-        <Button type="primary" className="shadow-none" danger>
+        <Button
+          type="primary"
+          className="shadow-none"
+          danger
+          onClick={handleLogout}
+        >
           Logout
         </Button>
       </Header>
@@ -51,7 +72,7 @@ const MainLayout = ({ children }) => {
 
       {/* Footer */}
       <Footer className="text-center bg-white shadow-md py-4">
-        © {new Date().getFullYear()} Website Monitor. All Rights Reserved.
+        &copy; {new Date().getFullYear()} Website Monitor. All Rights Reserved.
       </Footer>
     </Layout>
   );

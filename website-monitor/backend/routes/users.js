@@ -66,6 +66,6 @@ router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
-router.post("/logout", authenticate, logoutUser);
+router.post("/logout", logoutUser);
 
 module.exports = router;
