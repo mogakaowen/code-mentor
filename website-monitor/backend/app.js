@@ -19,7 +19,13 @@ const { monitorWebsites } = require("./middleware/monitor");
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Allow your frontend's origin
+    credentials: true, // Allow credentials like cookies
+  })
+);
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cookieParser());

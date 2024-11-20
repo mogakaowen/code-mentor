@@ -13,7 +13,7 @@ const authenticate = async (req, res, next) => {
   // Verify the token
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
     if (err) {
-      return res.status(403).send({ error: "Invalid access token." });
+      return res.status(401).send({ error: "Invalid access token." });
     }
 
     // Fetch the user from the database to check the tokenVersion

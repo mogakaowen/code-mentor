@@ -33,7 +33,8 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const response = await axiosInstance.post("/refresh"); // Cookie-based refresh token request
+        console.log("Refreshing token...");
+        const response = await axiosInstance.post("/users/refresh"); // Cookie-based refresh token request
         const newAccessToken = response?.data?.accessToken;
 
         if (newAccessToken) {
