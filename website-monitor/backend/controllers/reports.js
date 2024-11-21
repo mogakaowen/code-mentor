@@ -83,9 +83,7 @@ exports.getStatistics = async (req, res) => {
     });
 
     if (!reports || reports.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No reports found for this user." });
+      return res.status(200).json([]);
     }
 
     // Aggregate statistics for each website
@@ -93,9 +91,9 @@ exports.getStatistics = async (req, res) => {
       return {
         websiteUrl: report.websiteId.url, // Extract the URL from the populated website
         availability: report.availability,
-        uptime: report.uptime / 3600000, // Convert milliseconds to hours
-        downtime: report.downtime / 3600000, // Convert milliseconds to hours
-        avgResponseTime: report.avgResponseTime / 1000, // Convert to seconds
+        uptime: report.uptime / (60 * 60 * 1000),
+        downtime: report.downtime / (60 * 60 * 1000),
+        avgResponseTime: report.avgResponseTime / (60 * 60 * 1000),
       };
     });
 

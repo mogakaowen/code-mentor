@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Card, Col, Row } from "antd";
+import React from "react";
+import { Card } from "antd";
 import {
   XAxis,
   YAxis,
@@ -10,37 +10,69 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "../utils/axiosInstance";
 import { getSessionData } from "../utils/localStorageService";
 
+// Fetch statistics with useQuery
+const fetchStatistics = async () => {
+  const sessionData = getSessionData();
+  if (!sessionData?.email) {
+    throw new Error("User not authenticated.");
+  }
+  const response = await axiosInstance.get(
+    `/reports/statistics?email=${sessionData.email}`
+  );
+  return response.data;
+};
+
 const Dashboard = () => {
-  const [statistics, setStatistics] = useState([]);
-
-  useEffect(() => {
-    const sessionData = getSessionData();
-
-    const fetchStatistics = async () => {
-      try {
-        const response = await axiosInstance.get(
-          `/reports/statistics?email=${sessionData.email}`
-        );
-        setStatistics(response.data);
-      } catch (error) {
-        console.error("Error fetching statistics:", error);
-      }
-    };
-
-    fetchStatistics();
-  }, []);
+  const {
+    data: statistics,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["statistics"],
+    queryFn: fetchStatistics,
+    staleTime: 1000 * 60 * 1,
+  });
 
   // Prepare the data for the chart
-  const chartData = statistics.map((item) => ({
-    websiteUrl: new URL(item.websiteUrl).hostname, // Extract domain name
-    availability: item.availability,
-    uptime: item.uptime,
-    downtime: item.downtime,
-  }));
+  const chartData =
+    statistics?.map((item) => ({
+      websiteUrl: new URL(item.websiteUrl).hostname, // Extract domain name
+      availability: item.availability || 0,
+      uptime: item.uptime || 0,
+      downtime: item.downtime || 0,
+    })) || [];
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-4">
+        <Card
+          title="Website Availability and Uptime"
+          className="w-full text-center"
+        >
+          <p>Loading statistics...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error message
+  if (isError) {
+    return (
+      <div className="p-4">
+        <Card title="Website Availability and Uptime" className="w-full">
+          <p>Error: {error.message}</p>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show the data chart if available
   if (statistics.length === 0) {
     return (
       <div className="p-4">

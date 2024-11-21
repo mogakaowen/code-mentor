@@ -37,7 +37,9 @@ async function checkWebsite(website) {
     });
 
     const statusCode = response.status;
-    const responseTime = Date.now() - new Date(website.lastChecked).getTime();
+    const responseTime = website.lastChecked
+      ? Date.now() - new Date(website.lastChecked).getTime()
+      : website.interval * 60 * 1000;
 
     // Log status to database
     await new StatusLog({
@@ -249,7 +251,7 @@ async function monitorWebsites(user) {
         console.log(`Stopped monitoring for removed website ID: ${websiteId}`);
       }
     });
-  }, 60000); // Check every minute for new websites
+  }, 60); // Check every second for new websites
 
   // Store the interval for this user
   monitoringIntervals.set(user._id.toString(), intervalId);

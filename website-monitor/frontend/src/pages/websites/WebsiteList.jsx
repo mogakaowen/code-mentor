@@ -133,11 +133,13 @@ const WebsiteList = () => {
           <Descriptions.Item label="Status">
             {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
           </Descriptions.Item>
-          <Descriptions.Item label="Interval (seconds)">
+          <Descriptions.Item label="Interval (minutes)">
             {record.interval}
           </Descriptions.Item>
-          <Descriptions.Item label="Creation Date">
-            {record.createdAt}
+          <Descriptions.Item label="Last Checked">
+            {record.lastChecked
+              ? new Date(record.lastChecked).toLocaleString()
+              : "In progress"}
           </Descriptions.Item>
         </Descriptions>
       </div>
