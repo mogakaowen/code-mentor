@@ -11,14 +11,19 @@ import {
   Bar,
 } from "recharts";
 import axiosInstance from "../utils/axiosInstance";
+import { getSessionData } from "../utils/localStorageService";
 
 const Dashboard = () => {
   const [statistics, setStatistics] = useState([]);
 
   useEffect(() => {
+    const sessionData = getSessionData();
+
     const fetchStatistics = async () => {
       try {
-        const response = await axiosInstance.get("/reports/statistics");
+        const response = await axiosInstance.get(
+          `/reports/statistics?email=${sessionData.email}`
+        );
         setStatistics(response.data);
       } catch (error) {
         console.error("Error fetching statistics:", error);
@@ -35,6 +40,19 @@ const Dashboard = () => {
     uptime: item.uptime,
     downtime: item.downtime,
   }));
+
+  if (statistics.length === 0) {
+    return (
+      <div className="p-4">
+        <Card
+          title="Website Availability and Uptime"
+          className="w-full text-center"
+        >
+          <p>No statistics available.</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">

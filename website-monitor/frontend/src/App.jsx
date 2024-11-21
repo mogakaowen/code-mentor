@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Suspense, lazy } from "react";
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./utils/localStorageService";
 
 import { Loader, LoadingPage } from "./shared/Loading";
 import AuthLayout from "./layout/AuthLayout";
@@ -15,8 +16,7 @@ const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPassword"));
 
 const WebsitesPage = lazy(() => import("./pages/websites/WebsiteList"));
-
-const queryClient = new QueryClient();
+const AddEditWebsitePage = lazy(() => import("./pages/websites/AddWebsite"));
 
 function App() {
   return (
@@ -42,6 +42,14 @@ function App() {
                         <Routes>
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route path="/websites" element={<WebsitesPage />} />
+                          <Route
+                            path="/websites-add"
+                            element={<AddEditWebsitePage />}
+                          />
+                          <Route
+                            path="/websites/:mode/:id?"
+                            element={<AddEditWebsitePage />}
+                          />
                         </Routes>
                       </MainLayout>
                     }

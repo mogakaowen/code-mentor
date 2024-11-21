@@ -1,6 +1,7 @@
 import CryptoJS from "crypto-js";
 import axios from "axios";
 import axiosInstance from "./axiosInstance";
+import { QueryClient } from "@tanstack/react-query";
 
 const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
@@ -72,3 +73,5 @@ export const logoutUser = async () => {
     localStorage.clear(); // Ensure session data is cleared
   }
 };
+
+export const queryClient = new QueryClient();

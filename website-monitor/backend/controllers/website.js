@@ -42,6 +42,51 @@ exports.removeWebsite = async (req, res) => {
   }
 };
 
+// Fetch website using ID
+exports.getWebsite = async (req, res) => {
+  try {
+    const website = await Website.findOne({
+      _id: req.query.id,
+      userID: req.user.id,
+    });
+
+    if (!website) {
+      return res
+        .status(404)
+        .send({ error: "Website not found or not authorized" });
+    }
+
+    res.send({ website });
+  } catch (err) {
+    res.status(500).send({ error: "Could not fetch website" });
+  }
+};
+
+// Update website details
+exports.updateWebsite = async (req, res) => {
+  const { url, interval } = req.body;
+
+  try {
+    const website = await Website.findOneAndUpdate(
+      { _id: req.params.id, userID: req.user.id },
+      { url, interval },
+      { new: true }
+    );
+
+    if (!website) {
+      return res
+        .status(404)
+        .send({ error: "Website not found or not authorized" });
+    }
+
+    res.send({ message: "Website updated successfully", website });
+  } catch (err) {
+    res
+      .status(500)
+      .send({ error: "An error occurred while updating the website" });
+  }
+};
+
 // Get all websites for the authenticated user
 exports.getAllWebsites = async (req, res) => {
   try {

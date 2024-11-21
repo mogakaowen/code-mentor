@@ -1,21 +1,45 @@
 const StatusLog = require("../models/status-log");
 const Report = require("../models/report");
 const Website = require("../models/website");
+const User = require("../models/users");
 
 exports.getReport = async (req, res) => {
   try {
+    const { email } = req.body;
     const { websiteId } = req.params;
 
+    // Find the user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "No user found with this email." });
+    }
+
+    // Fetch the website associated with the user
+    const website = await Website.findOne({ _id: websiteId, userId: user._id });
+    if (!website) {
+      return res
+        .status(404)
+        .json({ message: "No website found for this user." });
+    }
+
     // Find the report for the specified website
-    const report = await Report.findOne({ websiteId });
+    const report = await Report.findOne({ websiteId }).populate({
+      path: "websiteId", // Populate the 'websiteId' field in the report with website details
+      select: "url", // Select only the 'url' field from the Website model
+    });
+
     if (!report) {
       return res
         .status(404)
         .json({ message: "No report found for this website." });
     }
 
-    // Retrieve all logs for the specified website
-    const logs = await StatusLog.find({ websiteId }).sort({ checkedAt: -1 });
+    // Retrieve all logs for the specified website and user
+    const logs = await StatusLog.find({ websiteId, userID: user._id }).sort({
+      checkedAt: -1,
+    });
 
     // Send the combined report and logs
     res.json({
@@ -32,28 +56,48 @@ exports.getReport = async (req, res) => {
 
 exports.getStatistics = async (req, res) => {
   try {
-    // Fetch all reports
-    const reports = await Report.find();
+    const { email } = req.query;
+
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "No user found with this email." });
+    }
+
+    // Fetch all websites for the specified user
+    const websites = await Website.find({ userID: user._id });
+
+    if (!websites || websites.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Fetch all reports for the websites that belong to this user
+    const reports = await Report.find({
+      websiteId: { $in: websites.map((website) => website._id) },
+    }).populate({
+      path: "websiteId", // Populate the 'websiteId' field in the report with website details
+      select: "url", // Select only the 'url' field from the Website model
+    });
+
     if (!reports || reports.length === 0) {
       return res
         .status(404)
-        .json({ message: "No reports found for any website." });
+        .json({ message: "No reports found for this user." });
     }
 
     // Aggregate statistics for each website
-    const statistics = await Promise.all(
-      reports.map(async (report) => {
-        const website = await Website.findOne({ _id: report.websiteId });
-
-        return {
-          websiteUrl: website.url, // Assuming the URL is part of the website report
-          availability: report.availability, // Availability in percentage
-          uptime: report.uptime / 3600000,
-          downtime: report.downtime / 3600000,
-          avgResponseTime: report.avgResponseTime / 3600000,
-        };
-      })
-    );
+    const statistics = reports.map((report) => {
+      return {
+        websiteUrl: report.websiteId.url, // Extract the URL from the populated website
+        availability: report.availability,
+        uptime: report.uptime / 3600000, // Convert milliseconds to hours
+        downtime: report.downtime / 3600000, // Convert milliseconds to hours
+        avgResponseTime: report.avgResponseTime / 1000, // Convert to seconds
+      };
+    });
 
     // Return the aggregated statistics
     res.json(statistics);
