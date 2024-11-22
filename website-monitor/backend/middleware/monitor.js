@@ -5,6 +5,7 @@ const Website = require("../models/website");
 const StatusLog = require("../models/status-log");
 const Report = require("../models/report");
 const dotenv = require("dotenv");
+const { response } = require("express");
 
 dotenv.config();
 
@@ -24,6 +25,11 @@ let monitoredUsers = new Map();
 let monitoringIntervals = new Map();
 
 async function checkWebsite(website) {
+  // Calculate response time (fallback to interval if not available)
+  const responseTime = website.lastChecked
+    ? Date.now() - new Date(website.lastChecked).getTime()
+    : website.interval * 60 * 1000;
+
   try {
     const response = await axios.get(website.url, {
       headers: {
@@ -37,9 +43,6 @@ async function checkWebsite(website) {
     });
 
     const statusCode = response.status;
-    const responseTime = website.lastChecked
-      ? Date.now() - new Date(website.lastChecked).getTime()
-      : website.interval * 60 * 1000;
 
     // Log status to database
     await new StatusLog({
@@ -53,7 +56,7 @@ async function checkWebsite(website) {
       status: statusCode === 200 ? "up" : "down",
     });
 
-    // Fetch or create report for this website
+    // Fetch or create report
     let report = await Report.findOneAndUpdate(
       { websiteId: website._id },
       {
@@ -74,37 +77,47 @@ async function checkWebsite(website) {
     if (statusCode === 200) {
       report.status = "up";
       report.uptime += responseTime / 1000;
-      report.downtime = Math.max(0, report.downtime - responseTime / 1000);
     } else {
       report.status = "down";
       report.outages += 1;
-      report.downtime += 60;
+
+      // Downtime is incremented based on interval or default value
+      const downtimeIncrement = responseTime / 1000;
+      report.downtime += downtimeIncrement;
+
       sendAlert(
         website,
         `Website ${website.url} is down. Status code: ${statusCode}`
       );
     }
 
-    // Log history
+    // Log history with size limit
+    const MAX_HISTORY_LENGTH = 100;
     report.history.push({
       timestamp: new Date(),
       status: report.status,
-      responseTime,
+      responseTime: responseTime,
     });
+    if (report.history.length > MAX_HISTORY_LENGTH) {
+      report.history.shift();
+    }
 
     // Update average response time
-    report.avgResponseTime =
-      (report.avgResponseTime * (report.history.length - 1) + responseTime) /
-      report.history.length;
+    if (statusCode === 200) {
+      report.avgResponseTime =
+        (report.avgResponseTime * (report.history.length - 1) + responseTime) /
+        report.history.length;
+    }
 
     // Calculate availability
     const totalTime = report.uptime + report.downtime;
-    report.availability = totalTime
-      ? ((report.uptime / totalTime) * 100).toFixed(2)
-      : 100;
+    report.availability =
+      totalTime > 0 ? ((report.uptime / totalTime) * 100).toFixed(2) : 100;
 
+    // Save report
     await report.save();
   } catch (error) {
+    // Handle failures
     const statusCode = error.response?.status || 500;
     const reason =
       error.response?.statusText || error.message || "Unknown Error";
@@ -134,21 +147,31 @@ async function checkWebsite(website) {
     // Update report
     report.status = "down";
     report.outages += 1;
-    report.downtime += 60;
+
+    // Increment downtime
+    const downtimeIncrement = responseTime / 1000;
+    report.downtime += downtimeIncrement;
+
+    // Log failure in history
+    const MAX_HISTORY_LENGTH = 100;
     report.history.push({
       timestamp: new Date(),
       status: "down",
       responseTime: null,
     });
+    if (report.history.length > MAX_HISTORY_LENGTH) {
+      report.history.shift();
+    }
 
     // Calculate availability safely
     const totalTime = report.uptime + report.downtime;
     report.availability =
       totalTime > 0 ? ((report.uptime / totalTime) * 100).toFixed(2) : 0;
 
+    // Save updated report
     await report.save();
 
-    // Update website status to down in database
+    // Update website status to "down"
     await Website.findByIdAndUpdate(website._id, {
       lastChecked: Date.now(),
       status: "down",

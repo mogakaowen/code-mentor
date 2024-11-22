@@ -88,9 +88,9 @@ exports.getStatistics = async (req, res) => {
       return {
         websiteUrl: report.websiteId.url, // Extract the URL from the populated website
         availability: report.availability,
-        uptime: report.uptime / (60 * 60 * 1000),
-        downtime: report.downtime / (60 * 60 * 1000),
-        avgResponseTime: report.avgResponseTime / (60 * 60 * 1000),
+        uptime: report.uptime,
+        downtime: report.downtime,
+        avgResponseTime: report.avgResponseTime,
       };
     });
 

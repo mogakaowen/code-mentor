@@ -1,5 +1,6 @@
 import { Card, Row, Col, Progress, Table } from "antd";
 import {
+  ResponsiveContainer,
   LineChart,
   Line,
   CartesianGrid,
@@ -35,10 +36,24 @@ const Report = ({ report, logs }) => {
     history,
   } = report;
 
-  history.forEach((item) => {
-    item.timestamp = new Date(item.timestamp).toLocaleString();
-    item.responseTime = item.responseTime / 1000;
-  });
+  const convertResponseTime = (responseTime) => {
+    if (responseTime >= 3600000) {
+      // Convert to hours if >= 1 hour
+      return (responseTime / 3600000).toFixed(2);
+    } else if (responseTime >= 60000) {
+      // Convert to minutes if >= 1 minute
+      return (responseTime / 60000).toFixed(2);
+    } else {
+      // Convert to seconds
+      return (responseTime / 1000).toFixed(2);
+    }
+  };
+
+  const formattedHistory = history.map((item) => ({
+    ...item,
+    timestamp: new Date(item.timestamp).toLocaleString(),
+    responseTime: convertResponseTime(item.responseTime),
+  }));
 
   const logColumns = [
     {
@@ -58,7 +73,7 @@ const Report = ({ report, logs }) => {
     <div className="w-full flex flex-col gap-4">
       {/* Overview */}
 
-      <Card title="Report Overview" bordered={false}>
+      <Card title="Report Overview" bordered={false} style={{ width: "100%" }}>
         <p>
           <strong>Status:</strong> {status}
         </p>
@@ -82,7 +97,84 @@ const Report = ({ report, logs }) => {
         </p>
       </Card>
 
-      <Card title="Logs" bordered={false}>
+      <Card
+        title="Response Time History"
+        bordered={false}
+        style={{ width: "100%" }}
+      >
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={formattedHistory}>
+            {/* Enhanced line styling */}
+            <Line
+              type="monotone"
+              dataKey="responseTime"
+              stroke="#0000FF"
+              strokeWidth={3}
+              dot={{ r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+            {/* Grid for better visibility */}
+            <CartesianGrid strokeDasharray="3 3" />
+
+            {/* X-axis with formatted timestamps */}
+            <XAxis
+              dataKey="timestamp"
+              tickFormatter={(value) =>
+                new Date(value).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              }
+              angle={-45}
+              textAnchor="end"
+              interval={0} // Display every tick
+              height={80} // Add space to avoid label clipping
+              tick={{ fontSize: 10 }}
+            />
+
+            {/* Y-axis with label */}
+            <YAxis
+              tickFormatter={(value) => {
+                if (avgResponseTime >= 3600000) {
+                  return `${value}h`;
+                } else if (avgResponseTime >= 60000) {
+                  return `${value}m`;
+                } else {
+                  return `${value}s`;
+                }
+              }}
+              label={{
+                value:
+                  avgResponseTime >= 3600000
+                    ? "Response Time (hrs)"
+                    : avgResponseTime >= 60000
+                    ? "Response Time (mins)"
+                    : "Response Time (s)",
+                angle: -90,
+                position: "insideLeft",
+                style: { textAnchor: "middle", fill: "#555" },
+              }}
+            />
+            {/* Tooltip for data inspection */}
+            <Tooltip
+              formatter={(value) => {
+                if (avgResponseTime >= 3600000) {
+                  return `${value}h`;
+                } else if (avgResponseTime >= 60000) {
+                  return `${value}m`;
+                } else {
+                  return `${value}s`;
+                }
+              }}
+              labelFormatter={(label) =>
+                `Checked At: ${new Date(label).toLocaleString()}`
+              }
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card title="Logs" bordered={false} style={{ width: "100%" }}>
         <Table
           dataSource={logs}
           columns={logColumns}
@@ -90,18 +182,6 @@ const Report = ({ report, logs }) => {
           pagination={{ pageSize: 5 }}
           size="small"
         />
-      </Card>
-
-      {/* History Visualization */}
-
-      <Card title="Response Time History" bordered={false}>
-        <LineChart width={600} height={300} data={history}>
-          <Line type="monotone" dataKey="responseTime" stroke="#8884d8" />
-          <CartesianGrid stroke="#ccc" />
-          <XAxis dataKey="timestamp" />
-          <YAxis />
-          <Tooltip />
-        </LineChart>
       </Card>
     </div>
   );
