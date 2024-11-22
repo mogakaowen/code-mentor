@@ -209,6 +209,8 @@ const WebsiteList = () => {
           pagination={{ pageSize: 5 }}
           expandable={expandable}
           style={{ width: "100%" }}
+          scroll={{ x: "max-content" }}
+          bordered
         />
       </div>
     </>

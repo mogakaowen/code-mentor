@@ -38,7 +38,7 @@ const MainLayout = ({ children }) => {
   ];
 
   return (
-    <Layout className="min-h-screen max-w-[80rem]">
+    <Layout className="min-h-screen w-full max-w-[80rem]">
       {/* Navbar */}
       <Header className="flex justify-between items-center bg-white shadow-md px-6">
         {/* Left: Logo and Monitor Name */}
@@ -52,7 +52,7 @@ const MainLayout = ({ children }) => {
             height="50px"
           />
           <span className="text-lg font-semibold text-gray-800">
-            Website Monitor
+            {session?.username}
           </span>
         </div>
 
