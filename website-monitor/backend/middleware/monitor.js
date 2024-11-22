@@ -5,7 +5,6 @@ const Website = require("../models/website");
 const StatusLog = require("../models/status-log");
 const Report = require("../models/report");
 const dotenv = require("dotenv");
-const { response } = require("express");
 
 dotenv.config();
 
@@ -211,6 +210,7 @@ function convertToCronFormat(interval) {
 function scheduleMonitoringJob(userId, website) {
   try {
     const cronExpression = convertToCronFormat(website.interval);
+    console.log(`Cron expression for ${website.url}: ${cronExpression}`);
     const job = new cron.CronJob(cronExpression, () => {
       checkWebsite(website);
     });

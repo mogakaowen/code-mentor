@@ -15,6 +15,7 @@ const VerifyUser = lazy(() => import("./pages/auth/VerifyUser"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPassword"));
 
+const Analytics = lazy(() => import("./pages/websites/Analytics"));
 const WebsitesPage = lazy(() => import("./pages/websites/WebsiteList"));
 const AddEditWebsitePage = lazy(() => import("./pages/websites/AddWebsite"));
 const ViewWebsitePage = lazy(() => import("./pages/websites/ViewWebsite"));
@@ -41,6 +42,7 @@ function App() {
                       <MainLayout>
                         <Routes>
                           <Route path="/dashboard" element={<Dashboard />} />
+                          <Route path="/analytics" element={<Analytics />} />
                           <Route path="/websites" element={<WebsitesPage />} />
                           <Route
                             path="/websites-add"

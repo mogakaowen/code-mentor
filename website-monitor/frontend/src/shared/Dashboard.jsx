@@ -95,7 +95,7 @@ const Dashboard = () => {
   );
 
   const yAxisLabel =
-    maxTime >= 36000
+    maxTime >= 3600
       ? "Time (hrs)"
       : maxTime >= 60
       ? "Time (mins)"
@@ -190,7 +190,7 @@ const Dashboard = () => {
 
             <Bar
               dataKey="uptime"
-              fill="#8884d8"
+              fill="#52c41a"
               name={`Uptime (${timeLabel})`}
             />
             <Bar

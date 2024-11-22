@@ -7,6 +7,7 @@ import {
   Space,
   Tooltip,
   Descriptions,
+  Input,
 } from "antd";
 import {
   PlusOutlined,
@@ -14,6 +15,7 @@ import {
   MinusOutlined,
   EyeOutlined,
   DeleteOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import axiosInstance from "../../utils/axiosInstance";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -74,6 +76,46 @@ const WebsiteList = () => {
           {text}
         </a>
       ),
+      // Implementing search
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            autoFocus
+            placeholder={`Search URL`}
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            style={{ marginBottom: 8, display: "block" }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              icon={<SearchOutlined />}
+              size="small"
+              className="shadow-none"
+            >
+              Search
+            </Button>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.url.toLowerCase().includes(value.toLowerCase()),
     },
     {
       title: "Status",
