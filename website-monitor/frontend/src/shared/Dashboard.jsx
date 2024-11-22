@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card } from "antd";
 import {
   XAxis,
@@ -13,6 +13,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "../utils/axiosInstance";
 import { getSessionData } from "../utils/localStorageService";
+import LottieAnimation from "./LottiePlayer";
 
 // Fetch statistics with useQuery
 const fetchStatistics = async () => {
@@ -20,6 +21,7 @@ const fetchStatistics = async () => {
   if (!sessionData?.email) {
     throw new Error("User not authenticated.");
   }
+
   const response = await axiosInstance.get(
     `/reports/statistics?email=${sessionData.email}`
   );
@@ -27,6 +29,14 @@ const fetchStatistics = async () => {
 };
 
 const Dashboard = () => {
+  const [collapsed, setCollapsed] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setCollapsed(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const {
     data: statistics,
     isLoading,
@@ -50,13 +60,12 @@ const Dashboard = () => {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="p-4">
-        <Card
-          title="Website Availability and Uptime"
-          className="w-full text-center"
-        >
-          <p>Loading statistics...</p>
-        </Card>
+      <div className="flex items-center justify-center h-screen w-full">
+        <LottieAnimation
+          animation="/web-takeoff.lottie"
+          width={collapsed ? "100px" : "200px"}
+          height={collapsed ? "100px" : "200px"}
+        />
       </div>
     );
   }

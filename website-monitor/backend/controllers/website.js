@@ -58,7 +58,7 @@ exports.getWebsite = async (req, res) => {
 
     res.send({ website });
   } catch (err) {
-    res.status(500).send({ error: "Could not fetch website" });
+    res.status(500).send({ error: "Website does not exist" });
   }
 };
 

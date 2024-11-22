@@ -16,6 +16,7 @@ const {
 } = require("./middleware/deleteUnverified");
 const Users = require("./models/users");
 const { monitorWebsites } = require("./middleware/monitor");
+const socket = require("./socket");
 
 const app = express();
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
@@ -59,11 +60,31 @@ const checkLoggedInUsers = async () => {
 };
 
 // Call this function when the server starts
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(async () => {
-    app.listen(PORT);
+async function connectDatabase() {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected to MongoDB");
+  } catch (error) {
+    console.error("Database connection error:", error);
+    process.exit(1);
+  }
+}
+
+async function startServer() {
+  try {
+    await connectDatabase();
+
+    const server = app.listen(PORT);
     await checkLoggedInUsers();
-  })
-  .catch((err) => console.error("MongoDB connection error:", err));
+
+    const io = socket.init(server);
+
+    io.on("connection", (socket) => {
+      console.log("Client connected:", socket?.id);
+    });
+  } catch (err) {
+    console.error("Error starting the server:", err);
+  }
+}
+
+startServer();

@@ -5,7 +5,7 @@ const User = require("../models/users");
 
 exports.getReport = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email } = req.query;
     const { websiteId } = req.params;
 
     // Find the user by email
@@ -17,7 +17,7 @@ exports.getReport = async (req, res) => {
     }
 
     // Fetch the website associated with the user
-    const website = await Website.findOne({ _id: websiteId, userId: user._id });
+    const website = await Website.findOne({ _id: websiteId, userID: user._id });
     if (!website) {
       return res
         .status(404)
@@ -25,10 +25,7 @@ exports.getReport = async (req, res) => {
     }
 
     // Find the report for the specified website
-    const report = await Report.findOne({ websiteId }).populate({
-      path: "websiteId", // Populate the 'websiteId' field in the report with website details
-      select: "url", // Select only the 'url' field from the Website model
-    });
+    const report = await Report.findOne({ websiteId });
 
     if (!report) {
       return res
@@ -37,7 +34,7 @@ exports.getReport = async (req, res) => {
     }
 
     // Retrieve all logs for the specified website and user
-    const logs = await StatusLog.find({ websiteId, userID: user._id }).sort({
+    const logs = await StatusLog.find({ websiteId }).sort({
       checkedAt: -1,
     });
 

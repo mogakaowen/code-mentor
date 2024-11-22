@@ -4,7 +4,6 @@ import {
   Badge,
   Button,
   message,
-  Alert,
   Space,
   Tooltip,
   Descriptions,
@@ -13,12 +12,14 @@ import {
   PlusOutlined,
   EditOutlined,
   MinusOutlined,
+  EyeOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
 import axiosInstance from "../../utils/axiosInstance";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { queryClient } from "../../utils/localStorageService";
+import ErrorPage from "../../shared/ErrorPage";
 
 const fetchWebsites = async () => {
   const { data } = await axiosInstance.get(
@@ -101,9 +102,21 @@ const WebsiteList = () => {
             <Button
               icon={<EditOutlined />}
               onClick={() => navigate(`/websites/edit/${record._id}`)}
-              disabled={mutation.isLoading}
             />
           </Tooltip>
+          <Tooltip title="View">
+            <Button
+              icon={<EyeOutlined className="text-yellow-500" />}
+              onClick={() => navigate(`/websites/view/${record._id}`)}
+              style={{
+                borderColor: "yellow",
+                "&:hover": {
+                  borderColor: "lightyellow",
+                },
+              }}
+            />
+          </Tooltip>
+
           <Tooltip title="Delete">
             <Button
               icon={<DeleteOutlined />}
@@ -159,21 +172,10 @@ const WebsiteList = () => {
   };
 
   if (isError) {
+    const errorDescription = error?.response?.data?.error || error?.message;
+
     return (
-      <div className="flex justify-center items-center bg-gray-100">
-        <Alert
-          message="Something went wrong!"
-          description={`${error.message}`}
-          type="error"
-          showIcon
-          action={
-            <Button size="small" type="link" onClick={() => refetch()}>
-              Retry
-            </Button>
-          }
-          className="mb-4"
-        />
-      </div>
+      <ErrorPage description={errorDescription} onRetry={() => refetch()} />
     );
   }
 

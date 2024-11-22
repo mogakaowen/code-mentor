@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import axiosInstance from "../../utils/axiosInstance";
 import { queryClient } from "../../utils/localStorageService";
 import { useNavigate, useParams } from "react-router-dom";
-import { LoadingPage } from "../../shared/Loading";
+import ErrorPage from "../../shared/ErrorPage";
 
 const getWebsiteData = async (id) => {
   try {
@@ -24,7 +24,13 @@ const AddEditWebsite = () => {
   const [interval, setInterval] = useState("");
 
   // Fetch website details in edit mode
-  const { data: websiteData, isLoading: isFetching } = useQuery({
+  const {
+    data: websiteData,
+    isLoading: isFetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["websites", id],
     queryFn: () => getWebsiteData(id), // Use the external function here
     enabled: mode === "edit" && !!id, // Only fetch in edit mode
@@ -111,7 +117,20 @@ const AddEditWebsite = () => {
     mutate(formData);
   };
 
-  if (isFetching) return <LoadingPage />;
+  if (isFetching)
+    return (
+      <div className="flex items-center justify-center h-[70vh]">
+        <Spin size="large" />
+      </div>
+    );
+
+  if (isError) {
+    const errorDescription = error?.response?.data?.error || error?.message;
+
+    return (
+      <ErrorPage description={errorDescription} onRetry={() => refetch()} />
+    );
+  }
 
   return (
     <div className="p-6 w-full">

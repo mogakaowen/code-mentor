@@ -3,7 +3,7 @@ import { Suspense, lazy } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./utils/localStorageService";
 
-import { Loader, LoadingPage } from "./shared/Loading";
+import { Loader } from "./shared/Loading";
 import AuthLayout from "./layout/AuthLayout";
 import MainLayout from "./layout/MainLayout";
 
@@ -17,6 +17,7 @@ const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPassword"));
 
 const WebsitesPage = lazy(() => import("./pages/websites/WebsiteList"));
 const AddEditWebsitePage = lazy(() => import("./pages/websites/AddWebsite"));
+const ViewWebsitePage = lazy(() => import("./pages/websites/ViewWebsite"));
 
 function App() {
   return (
@@ -26,15 +27,14 @@ function App() {
           {/* Auth Routes */}
           <Route path="/auth/*" element={<AuthRoutes />} />
           <Route path="/auth/verify/:userId/:token" element={<VerifyUser />} />
+          <Route path="/" element={<Home />} />
 
           {/* Main Routes with Suspense for dynamic components */}
           <Route
             path="*"
             element={
-              <Suspense fallback={<LoadingPage />}>
+              <Suspense fallback={<Loader />}>
                 <Routes>
-                  <Route path="/" element={<Home />} />
-
                   <Route
                     path="/*"
                     element={
@@ -49,6 +49,10 @@ function App() {
                           <Route
                             path="/websites/:mode/:id?"
                             element={<AddEditWebsitePage />}
+                          />
+                          <Route
+                            path="/websites/view/:id"
+                            element={<ViewWebsitePage />}
                           />
                         </Routes>
                       </MainLayout>
