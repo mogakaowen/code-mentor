@@ -52,10 +52,8 @@ const Dashboard = () => {
   // Utility function for converting time
   const formatTime = (seconds) => {
     if (seconds >= 3600) {
-      setTimeLabel("hrs");
       return `${(seconds / 3600).toFixed(2)} hrs`;
     } else {
-      setTimeLabel("mins");
       return `${(seconds / 60).toFixed(2)} mins`;
     }
   };
@@ -70,6 +68,19 @@ const Dashboard = () => {
     }
   };
 
+  // Calculate the time label based on the statistics
+  useEffect(() => {
+    const maxUptime = statistics?.reduce((max, item) => {
+      return item.uptime > max ? item.uptime : max;
+    }, 0);
+
+    if (maxUptime >= 3600) {
+      setTimeLabel("hrs");
+    } else {
+      setTimeLabel("mins");
+    }
+  }, [statistics]); // Run when statistics changes
+
   const chartData =
     statistics?.map((item) => ({
       websiteUrl: new URL(item.websiteUrl).hostname, // Extract domain name
@@ -78,6 +89,17 @@ const Dashboard = () => {
       downtime: item.downtime || 0,
       avgResponseTime: item.avgResponseTime || 0,
     })) || [];
+
+  const maxTime = Math.max(
+    ...chartData.map((site) => Math.max(site.uptime, site.downtime))
+  );
+
+  const yAxisLabel =
+    maxTime >= 36000
+      ? "Time (hrs)"
+      : maxTime >= 60
+      ? "Time (mins)"
+      : "Time (secs)";
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -143,14 +165,29 @@ const Dashboard = () => {
               tickLine={false}
               dy={-10}
             />
-            <YAxis />
+
+            <YAxis
+              tickFormatter={(value) => {
+                const seconds = value;
+                if (seconds >= 3600) {
+                  return `${(seconds / 3600).toFixed(0)}h`; // Format in hours
+                } else if (seconds >= 60) {
+                  return `${(seconds / 60).toFixed(0)}m`; // Format in minutes
+                } else {
+                  return `${seconds.toFixed(2)}s`; // Format in seconds
+                }
+              }}
+              label={{
+                value: yAxisLabel, // Use the computed label here
+                angle: -90,
+                position: "insideLeft",
+                style: { textAnchor: "middle", fill: "#555" },
+              }}
+            />
+
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            <Bar
-              dataKey="availability"
-              fill="#82ca9d"
-              name="Availability (%)"
-            />
+
             <Bar
               dataKey="uptime"
               fill="#8884d8"
