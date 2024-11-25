@@ -1,5 +1,3 @@
-const mongoose = require("mongoose");
-
 const Website = require("../models/website");
 const StatusLog = require("../models/status-log");
 const Report = require("../models/report");

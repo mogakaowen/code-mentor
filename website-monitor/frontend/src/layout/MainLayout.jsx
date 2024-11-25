@@ -16,11 +16,11 @@ const MainLayout = ({ children }) => {
     localStorage.getItem("currentMenuKey") || "profile"
   );
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const handleLogout = useCallback(async () => {
     await logoutUser();
-    navigate("/auth/signin", { replace: true });
+    navigate("/", { replace: true });
   }, [navigate]);
 
   const handleNavigate = () => {
@@ -28,11 +28,7 @@ const MainLayout = ({ children }) => {
   };
 
   const handleResize = () => {
-    if (window.innerWidth < 768) {
-      setIsMobile(true);
-    } else {
-      setIsMobile(false);
-    }
+    setIsMobile(window.innerWidth < 768);
   };
 
   useEffect(() => {
@@ -64,6 +60,8 @@ const MainLayout = ({ children }) => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  console.log("ismobile", isMobile);
 
   const items = [
     {

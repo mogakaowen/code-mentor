@@ -21,7 +21,7 @@ const ProfilePage = () => {
       onOk: async () => {
         // Simulate account deletion
         await deleteUser();
-        window.location.href = "/auth/signin";
+        window.location.href = "/";
       },
     });
   };

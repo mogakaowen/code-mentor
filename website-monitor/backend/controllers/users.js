@@ -10,7 +10,6 @@ const { validationResult } = require("express-validator");
 const Users = require("../models/users");
 const Token = require("../models/tokens");
 const Website = require("../models/website");
-const Notification = require("../models/notification");
 const StatusLog = require("../models/status-log");
 const Report = require("../models/report");
 const { createToken } = require("./tokens");
@@ -415,7 +414,6 @@ exports.deleteUser = async (req, res, next) => {
       Users.deleteOne({ _id: userId }),
       Token.deleteMany({ userID: userId }),
       Website.deleteMany({ userID: userId }),
-      Notification.deleteMany({ userId: userId }),
       StatusLog.deleteMany({
         websiteId: { $in: websiteIds },
       }),

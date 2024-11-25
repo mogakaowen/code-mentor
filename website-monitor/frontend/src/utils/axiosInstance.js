@@ -43,7 +43,7 @@ axiosInstance.interceptors.response.use(
       error.response?.status === 401 &&
       originalRequest.url === "/users/refresh"
     ) {
-      window.location.href = "/auth/signin";
+      window.location.href = "/";
       return Promise.reject(error);
     }
 
@@ -64,13 +64,13 @@ axiosInstance.interceptors.response.use(
         } else {
           // Clear local storage and redirect to login if refresh token is invalid
           await logoutUser();
-          window.location.href = "/auth/signin";
+          window.location.href = "/";
           return Promise.reject(error);
         }
       } catch (refreshError) {
         // Handle refresh token failure
         await logoutUser();
-        window.location.href = "/auth/signin";
+        window.location.href = "/";
         console.error("Failed to refresh token:", refreshError);
         return Promise.reject(refreshError);
       }
