@@ -1,6 +1,9 @@
+const mongoose = require("mongoose");
+
 const Website = require("../models/website");
 const StatusLog = require("../models/status-log");
 const Report = require("../models/report");
+const { stopMonitoring, monitorWebsites } = require("../middleware/monitor");
 
 // Add a new website to monitor
 exports.addNewWebsite = async (req, res) => {
@@ -30,12 +33,15 @@ exports.removeWebsite = async (req, res) => {
         .send({ error: "Website not found or not authorized" });
     }
 
-    // Delete associated status logs and reports
-    await StatusLog.deleteMany({ websiteId: website._id });
-    await Report.deleteMany({ websiteId: website._id });
+    const websiteId = website._id;
+    await Promise.all([
+      StatusLog.deleteMany({ websiteId }),
+      Report.deleteMany({ websiteId }),
+    ]);
 
     res.status(200).send({ message: "Website removed successfully" });
   } catch (err) {
+    console.error(err);
     res
       .status(500)
       .send({ error: "An error occurred while deleting the website" });
@@ -79,8 +85,17 @@ exports.updateWebsite = async (req, res) => {
         .send({ error: "Website not found or not authorized" });
     }
 
+    const currentUser = {
+      ...req.user,
+      _id: req.user.id,
+    };
+
+    await stopMonitoring(currentUser.id); // Stop monitoring for the user to update the interval
+    await monitorWebsites(currentUser); // Restart monitoring with the updated interval
+
     res.send({ message: "Website updated successfully", website });
   } catch (err) {
+    console.error(err, req.user);
     res
       .status(500)
       .send({ error: "An error occurred while updating the website" });

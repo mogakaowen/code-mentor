@@ -8,6 +8,7 @@ const {
   forgotPassword,
   resetPassword,
   googleLogin,
+  deleteUser,
 } = require("../controllers/users");
 const Users = require("../models/users");
 const { refreshAccessToken } = require("../controllers/tokens");
@@ -67,5 +68,6 @@ router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 router.post("/logout", logoutUser);
+router.delete("/delete", authenticate, deleteUser);
 
 module.exports = router;

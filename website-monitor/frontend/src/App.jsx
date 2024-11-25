@@ -7,6 +7,7 @@ import { Loader } from "./shared/Loading";
 import AuthLayout from "./layout/AuthLayout";
 import MainLayout from "./layout/MainLayout";
 
+// Lazy-loaded components
 const Home = lazy(() => import("./shared/Home"));
 const Dashboard = lazy(() => import("./shared/Dashboard"));
 const SignupPage = lazy(() => import("./pages/auth/Signup"));
@@ -19,6 +20,8 @@ const Analytics = lazy(() => import("./pages/websites/Analytics"));
 const WebsitesPage = lazy(() => import("./pages/websites/WebsiteList"));
 const AddEditWebsitePage = lazy(() => import("./pages/websites/AddWebsite"));
 const ViewWebsitePage = lazy(() => import("./pages/websites/ViewWebsite"));
+const ProfilePage = lazy(() => import("./pages/auth/Profile"));
+const NotFound = lazy(() => import("./shared/NotFound")); // Import the NotFound component
 
 function App() {
   return (
@@ -41,6 +44,7 @@ function App() {
                     element={
                       <MainLayout>
                         <Routes>
+                          <Route path="/profile" element={<ProfilePage />} />
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route path="/analytics" element={<Analytics />} />
                           <Route path="/websites" element={<WebsitesPage />} />
@@ -56,12 +60,24 @@ function App() {
                             path="/websites/view/:id"
                             element={<ViewWebsitePage />}
                           />
+                          <Route path="*" element={<NotFound />} />{" "}
+                          {/* 404 for main routes */}
                         </Routes>
                       </MainLayout>
                     }
                   />
                   {/* Add other main routes here */}
                 </Routes>
+              </Suspense>
+            }
+          />
+
+          {/* Catch-all 404 Route */}
+          <Route
+            path="*"
+            element={
+              <Suspense fallback={<Loader />}>
+                <NotFound />
               </Suspense>
             }
           />

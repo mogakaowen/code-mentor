@@ -9,8 +9,11 @@ const nodemailer = require("nodemailer");
 const { validationResult } = require("express-validator");
 const Users = require("../models/users");
 const Token = require("../models/tokens");
+const Website = require("../models/website");
+const Notification = require("../models/notification");
+const StatusLog = require("../models/status-log");
+const Report = require("../models/report");
 const { createToken } = require("./tokens");
-const { type } = require("os");
 
 const { stopMonitoring, monitorWebsites } = require("../middleware/monitor");
 
@@ -40,7 +43,6 @@ exports.googleLogin = async (req, res, next) => {
     }
 
     const payload = await admin.auth().verifyIdToken(idToken); // Use Firebase Admin SDK
-    console.log("payload", payload);
 
     // Check if the user exists
     let user = await Users.findOne({ email: payload.email });
@@ -51,6 +53,7 @@ exports.googleLogin = async (req, res, next) => {
         email: payload.email,
         name: payload.name,
         username: payload.name, // Optionally use the name or any logic to set a username
+        password: `google-auth@${payload.email}`, // Set a dummy password for Google sign-in users
         verified: true, // Google sign-in users are considered verified
       });
       await user.save();
@@ -86,6 +89,9 @@ exports.googleLogin = async (req, res, next) => {
 
     user.isLoggedIn = true;
     await user.save();
+
+    // Start monitoring for the logged-in user
+    await monitorWebsites(user);
 
     // Set the refresh token as an HTTP-only cookie
     res.cookie("refreshToken", refreshToken, {
@@ -370,6 +376,59 @@ exports.resetPassword = async (req, res, next) => {
       next({ status: 403, message: "Token expired." });
     }
     console.error("Error in resetPassword:", err);
+    next(err);
+  }
+};
+
+exports.deleteUser = async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).send({ error: "Email is required." });
+  }
+
+  try {
+    const user = await Users.findOne({ email });
+
+    if (!user) {
+      return res.status(404).send({ error: "User not found." });
+    }
+
+    if (!user.isLoggedIn) {
+      return res.status(403).send({ error: "User not logged in." });
+    }
+
+    const userId = user._id;
+
+    if (req.user.id !== userId.toString()) {
+      return res
+        .status(403)
+        .send({ error: "You are not authorized to delete this user." });
+    }
+
+    // Fetch all websites associated with the user
+    const websites = await Website.find({ userID: userId });
+    const websiteIds = websites.map((website) => website._id);
+
+    // Perform deletions in parallel using Promise.all
+    await Promise.all([
+      Users.deleteOne({ _id: userId }),
+      Token.deleteMany({ userID: userId }),
+      Website.deleteMany({ userID: userId }),
+      Notification.deleteMany({ userId: userId }),
+      StatusLog.deleteMany({
+        websiteId: { $in: websiteIds },
+      }),
+      Report.deleteMany({
+        websiteId: { $in: websiteIds },
+      }),
+    ]);
+
+    res
+      .status(200)
+      .send({ message: "User and associated data deleted successfully." });
+  } catch (err) {
+    console.error("Error deleting user:", err);
     next(err);
   }
 };

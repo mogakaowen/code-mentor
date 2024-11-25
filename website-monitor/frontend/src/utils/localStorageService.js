@@ -74,4 +74,27 @@ export const logoutUser = async () => {
   }
 };
 
+// deleteUser
+export const deleteUser = async () => {
+  const sessionData = getSessionData();
+  if (!sessionData) {
+    clearSessionData(); // Clear storage just in case
+    return;
+  }
+
+  try {
+    const response = await axiosInstance.delete(
+      `${import.meta.env.VITE_API_BASE_URL}/users/delete/`,
+      {
+        data: { email: sessionData.email },
+      }
+    );
+    console.log("Delete user response:", response?.data?.message);
+  } catch (error) {
+    console.error("Delete user error:", error);
+  } finally {
+    localStorage.clear();
+  }
+};
+
 export const queryClient = new QueryClient();
