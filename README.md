@@ -34,7 +34,7 @@ Each project focuses on different aspects of programming, from front-end develop
 - **Description**: The YouTube Video Search App is an interactive web application that enables users to search for YouTube videos and watch them directly within the app. Users can enter a search term to find relevant videos, and the search results (up to 5 videos) are displayed as thumbnails with titles on the right-hand side. When a user clicks on a video, it is featured on the left-hand side in a video player, showing the video title and description underneath. Users can play the selected video using the built-in player. For a richer experience, a default search term is included to load a set of videos when the app starts, with the first video automatically featured.
 - **Hint**: Clicking the app icon/name triggers light/dark mode change.
 - **Technologies Used**: React, Tailwind Css, JavaScript, Ant Design
-- **Live Demo**: [ Joke Telling Bot Live Demo](https://mogaka-tube.netlify.app/)
+- **Live Demo**: [ Personal YouTube Web Player- Live Demo](https://mogaka-tube.netlify.app/)
 
 ### 4. Globe Project
 

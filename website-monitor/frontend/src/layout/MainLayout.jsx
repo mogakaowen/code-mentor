@@ -61,8 +61,6 @@ const MainLayout = ({ children }) => {
     };
   }, []);
 
-  console.log("ismobile", isMobile);
-
   const items = [
     {
       key: "dashboard",

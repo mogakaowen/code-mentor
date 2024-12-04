@@ -230,7 +230,7 @@ const WebsiteList = () => {
           </p>
           <Button
             type="primary"
-            className="mb-4 w-full sm:w-auto shadow-none"
+            className="mb-4 w-auto  shadow-none"
             onClick={() => navigate("/websites-add")}
             icon={<PlusOutlined />}
           >
