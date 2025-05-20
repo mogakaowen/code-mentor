@@ -4,6 +4,7 @@ dotenv.config();
 
 export async function handler(event, context) {
   const prerenderToken = process.env.PRERENDER_TOKEN; // Your prerender.io API token
+  console.log("Using prerender token:", prerenderToken);
 
   // Construct URL to prerender.io service, append the original path/query
   const urlToRender = `https://service.prerender.io${event.path}${
@@ -20,7 +21,7 @@ export async function handler(event, context) {
     });
 
     const body = await response.text();
-    console.log("Prerender:", body);
+    console.log("Prerender response:", body);
 
     return {
       statusCode: response.status,
