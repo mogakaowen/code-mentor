@@ -5,29 +5,31 @@ import Home from "./pages/Home";
 import { useContext } from "react";
 import { ThemeContext } from "../store/theme-context";
 import ThemeToggler from "../shared/ThemeChanger";
+import { HelmetProvider } from "react-helmet-async";
 
 function App() {
   const { theme: currentTheme } = useContext(ThemeContext);
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm:
-          currentTheme === "light"
-            ? theme.defaultAlgorithm
-            : theme.darkAlgorithm,
-      }}
-    >
-      <MainLayout>
+    <HelmetProvider>
+      <ConfigProvider
+        theme={{
+          algorithm:
+            currentTheme === "light"
+              ? theme.defaultAlgorithm
+              : theme.darkAlgorithm,
+        }}
+      >
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-          </Routes>
+          <MainLayout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+            </Routes>
+            <ThemeToggler />
+          </MainLayout>
         </BrowserRouter>
-
-        <ThemeToggler />
-      </MainLayout>
-    </ConfigProvider>
+      </ConfigProvider>
+    </HelmetProvider>
   );
 }
 
