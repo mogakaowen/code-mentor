@@ -1,0 +1,5 @@
+# Redirect bots to prerender proxy function
+/*  /.netlify/functions/prerender-proxy  200!  [User-Agent=facebookexternalhit*,User-Agent=Twitterbot*,User-Agent=LinkedInBot*,User-Agent=Googlebot*]
+
+# Fallback: serve React SPA for all other requests
+/*    /index.html   200
