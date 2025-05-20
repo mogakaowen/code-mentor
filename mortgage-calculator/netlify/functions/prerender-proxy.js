@@ -20,6 +20,7 @@ export async function handler(event, context) {
     });
 
     const body = await response.text();
+    console.log("Prerender:", body);
 
     return {
       statusCode: response.status,
