@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Sequential Bounce Animations */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce1 {
+  animation: bounce 1.5s infinite ease-in-out;
+}
+
+.animate-bounce2 {
+  animation: bounce 1.5s infinite ease-in-out;
+  animation-delay: 0.3s;
+}
+
+.animate-bounce3 {
+  animation: bounce 1.5s infinite ease-in-out;
+  animation-delay: 0.6s;
+}
+
+/* Fade Animation for Sub-text */
+@keyframes fade {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-fade {
+  animation: fade 2s infinite ease-in-out;
+}

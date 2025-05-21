@@ -116,7 +116,7 @@ exports.googleLogin = async (req, res, next) => {
 };
 
 exports.createUser = async (req, res, next) => {
-  const { email, name, username, password } = req.body;
+  const { email, name, username, password, confirmPassword } = req.body;
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -342,6 +342,10 @@ exports.resetPassword = async (req, res, next) => {
   const { password } = req.body;
 
   try {
+    if (!token) {
+      return res.status(403).send({ error: "Token is required." });
+    }
+
     // Verify the JWT
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
 

@@ -11,12 +11,12 @@ const Loader = () => {
 const LoadingPage = () => {
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center space-y-2">
-        {/* Bouncing Dots with Continuous Movement */}
+      <div className="text-center space-y-3">
+        {/* Bouncing Dots with Staggered Movement */}
         <div className="flex justify-center items-center space-x-3">
-          <div className="w-6 h-6 bg-blue-800 rounded-full animate-dotMove1"></div>
-          <div className="w-6 h-6 bg-blue-800 rounded-full animate-dotMove2"></div>
-          <div className="w-6 h-6 bg-blue-800 rounded-full animate-dotMove3"></div>
+          <div className="w-6 h-6 bg-blue-800 rounded-full animate-bounce1"></div>
+          <div className="w-6 h-6 bg-blue-800 rounded-full animate-bounce2"></div>
+          <div className="w-6 h-6 bg-blue-800 rounded-full animate-bounce3"></div>
         </div>
 
         {/* Loading Text */}

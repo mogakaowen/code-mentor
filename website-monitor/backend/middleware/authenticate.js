@@ -20,7 +20,7 @@ const authenticate = async (req, res, next) => {
     const user = await Users.findById(decoded.id);
 
     if (!user) {
-      return res.status(404).send({ error: "User not found." });
+      return res.status(401).send({ error: "User not found." });
     }
 
     // Check if tokenVersion from the token matches the one in the database
